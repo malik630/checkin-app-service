@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  uid          String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  displayName  String   @map("display_name")
+  phoneNumber  String?  @map("phone_number")
+  photoUrl     String?  @map("photo_url")
+  provider     String   @default("email")
+  createdAt    DateTime @default(now()) @map("created_at")
+  lastLogin    DateTime @default(now()) @map("last_login")
+
+  bookings      Booking[]
+  passengers    Passenger[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Flight {
+  flightId         String   @id @default(uuid()) @map("flight_id")
+  flightNumber     String   @unique @map("flight_number")
+  origin           String
+  originCity       String   @map("origin_city")
+  destination      String
+  destinationCity  String   @map("destination_city")
+  departureTime    DateTime @map("departure_time")
+  arrivalTime      DateTime @map("arrival_time")
+  aircraftType     String   @map("aircraft_type")
+  status           String   @default("Scheduled")
+  gate             String?
+  terminal         String?
+  boardingTime     String?  @map("boarding_time")
+  checkInOpensTime String?  @map("checkin_opens_time")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  bookings       Booking[]
+  seatMap        SeatMap[]
+  boardingPasses BoardingPass[]
+  notifications  Notification[]
+
+  @@map("flights")
+}
+
+model Booking {
+  bookingId       String    @id @default(uuid()) @map("booking_id")
+  uid             String
+  flightId        String    @map("flight_id")
+  pnr             String    @unique
+  lastName        String    @map("last_name")
+  bookingRef      String    @unique @map("booking_ref")
+  status          String    @default("CONFIRMED")
+  checkinDeadline DateTime? @map("checkin_deadline")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user            User             @relation(fields: [uid], references: [uid])
+  flight          Flight           @relation(fields: [flightId], references: [flightId])
+  passengers      Passenger[]
+  checkInSessions CheckInSession[]
+
+  @@map("bookings")
+}
+
+model Passenger {
+  passengerId    String  @id @default(uuid()) @map("passenger_id")
+  bookingId      String  @map("booking_id")
+  uid            String
+  firstName      String  @map("first_name")
+  lastName       String  @map("last_name")
+  passportNumber String  @map("passport_number")
+  nationality    String
+  dateOfBirth    String  @map("date_of_birth")
+  expiryDate     String  @map("expiry_date")
+  seatNumber     String? @map("seat_number")
+  checkinStatus  String  @default("PENDING") @map("checkin_status")
+
+  booking        Booking         @relation(fields: [bookingId], references: [bookingId])
+  user           User            @relation(fields: [uid], references: [uid])
+  checkInSession CheckInSession?
+  boardingPass   BoardingPass?
+  notifications  Notification[]
+  seatAssignment SeatMap?        @relation("SeatOccupant")
+
+  @@map("passengers")
+}
+
+model SeatMap {
+  seatId      String  @id @default(uuid()) @map("seat_id")
+  flightId    String  @map("flight_id")
+  seatNumber  String  @map("seat_number")
+  seatClass   String  @map("seat_class")
+  isAvailable Boolean @default(true) @map("is_available")
+  isPremium   Boolean @default(false) @map("is_premium")
+  occupiedBy  String? @unique @map("occupied_by")
+
+  flight   Flight     @relation(fields: [flightId], references: [flightId])
+  occupant Passenger? @relation("SeatOccupant", fields: [occupiedBy], references: [passengerId])
+
+  @@unique([flightId, seatNumber])
+  @@map("seat_map")
+}
+
+model CheckInSession {
+  sessionId          String    @id @default(uuid()) @map("session_id")
+  passengerId        String    @unique @map("passenger_id")
+  bookingId          String    @map("booking_id")
+  currentStep        String    @default("PASSPORT_SCAN") @map("current_step")
+  passportScanUrl    String?   @map("passport_scan_url")
+  ocrValidation      Json?     @map("ocr_validation")
+  baggageDeclaration Json?     @map("baggage_declaration")
+  specialRequests    Json?     @map("special_requests")
+  completedAt        DateTime? @map("completed_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  passenger Passenger @relation(fields: [passengerId], references: [passengerId])
+  booking   Booking   @relation(fields: [bookingId], references: [bookingId])
+
+  @@map("checkin_sessions")
+}
+
+model BoardingPass {
+  passId       String   @id @default(uuid()) @map("pass_id")
+  passengerId  String   @unique @map("passenger_id")
+  flightId     String   @map("flight_id")
+  qrCode       String   @map("qr_code")
+  seatNumber   String   @map("seat_number")
+  gate         String
+  boardingTime String   @map("boarding_time")
+  terminal     String?
+  issuedAt     DateTime @default(now()) @map("issued_at")
+
+  passenger Passenger @relation(fields: [passengerId], references: [passengerId])
+  flight    Flight    @relation(fields: [flightId], references: [flightId])
+
+  @@map("boarding_passes")
+}
+
+model Notification {
+  notificationId String   @id @default(uuid()) @map("notification_id")
+  uid            String
+  passengerId    String?  @map("passenger_id")
+  flightId       String?  @map("flight_id")
+  type           String
+  title          String
+  body           String
+  isRead         Boolean  @default(false) @map("is_read")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user      User       @relation(fields: [uid], references: [uid])
+  passenger Passenger? @relation(fields: [passengerId], references: [passengerId])
+  flight    Flight?    @relation(fields: [flightId], references: [flightId])
+
+  @@map("notifications")
+}
