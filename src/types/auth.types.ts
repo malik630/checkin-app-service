@@ -1,4 +1,4 @@
-//miroring my dto 
+// miroring my dto
 
 export interface UserDto {
   uid: string;
@@ -20,6 +20,7 @@ export interface LoginRequest {
 export interface LoginResponse {
   user: UserDto;
   token: string;
+  refreshToken: string;
 }
 
 export interface RegisterRequest {
@@ -33,11 +34,12 @@ export interface RegisterRequest {
 export interface AuthResponse {
   user: UserDto;
   token: string;
+  refreshToken: string;
 }
 
 export interface TokenResponse {
   accessToken: string;
-  refreshToken?: string | null;
+  refreshToken: string;
 }
 
 export interface RefreshRequest {
