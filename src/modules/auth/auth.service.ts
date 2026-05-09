@@ -1,43 +1,38 @@
-// src/services/auth.service.ts
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import prisma from "../../prisma/client.js";
+import bcrypt from 'bcryptjs'
+import prisma from '../../prisma/client.js'
+import { signToken, verifyToken } from '../../utils/jwt.js'
+import { env } from '../../config/env.js'
+import jwt from 'jsonwebtoken'
 import type {
   LoginRequest,
   RegisterRequest,
   LoginResponse,
   AuthResponse,
   TokenResponse,
-} from "../../types/auth.types.js";
-
-const JWT_SECRET = process.env.JWT_SECRET!;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
+} from '../../types/auth.types.js'
 
 // ─── Token Helpers ─────────────────────────────────────────
-function generateAccessToken(uid: string, email: string): string {
-  return jwt.sign({ uid, email }, JWT_SECRET, { expiresIn: "1h" });
-}
 
 function generateRefreshToken(uid: string): string {
-  return jwt.sign({ uid }, JWT_REFRESH_SECRET, { expiresIn: "7d" });
+
+  // Define the JWT_REFRESH_SECRET in your .env file and load it using the env module
+  return jwt.sign({ uid }, env.jwt.refreshSecret, { expiresIn: '7d' } as jwt.SignOptions)
 }
 
 // ─── Login ─────────────────────────────────────────────────
 export async function loginUser(body: LoginRequest): Promise<LoginResponse> {
-  const record = await prisma.user.findUnique({
-    where: { email: body.email },
-  });
-  if (!record) throw new Error("User not found");
+  const record = await prisma.user.findUnique({ where: { email: body.email } })
+  if (!record) throw new Error('User not found')
 
-  const passwordMatch = await bcrypt.compare(body.password, record.passwordHash);
-  if (!passwordMatch) throw new Error("Invalid credentials");
+  const passwordMatch = await bcrypt.compare(body.password, record.passwordHash)
+  if (!passwordMatch) throw new Error('Invalid credentials')
 
   await prisma.user.update({
     where: { email: body.email },
     data: { lastLogin: new Date() },
-  });
+  })
 
-  const token = generateAccessToken(record.uid, record.email);
+  const token = signToken({ uid: record.uid, email: record.email })
 
   return {
     user: {
@@ -52,30 +47,28 @@ export async function loginUser(body: LoginRequest): Promise<LoginResponse> {
       token,
     },
     token,
-  };
+  }
 }
 
 // ─── Register ──────────────────────────────────────────────
 export async function registerUser(body: RegisterRequest): Promise<AuthResponse> {
-  const existing = await prisma.user.findUnique({
-    where: { email: body.email },
-  });
-  if (existing) throw new Error("Email already in use");
+  const existing = await prisma.user.findUnique({ where: { email: body.email } })
+  if (existing) throw new Error('Email already in use')
 
-  const passwordHash = await bcrypt.hash(body.password, 12);
+  const passwordHash = await bcrypt.hash(body.password, 12)
 
   const newUser = await prisma.user.create({
     data: {
       uid: body.uid,
       email: body.email,
       passwordHash,
-      displayName: body.display_name ?? "User",
+      displayName: body.display_name ?? 'User',
       phoneNumber: body.phone_number ?? null,
-      provider: "email",
+      provider: 'email',
     },
-  });
+  })
 
-  const token = generateAccessToken(newUser.uid, newUser.email);
+  const token = signToken({ uid: newUser.uid, email: newUser.email })
 
   return {
     user: {
@@ -90,26 +83,23 @@ export async function registerUser(body: RegisterRequest): Promise<AuthResponse>
       token,
     },
     token,
-  };
+  }
 }
 
 // ─── Refresh Token ─────────────────────────────────────────
 export async function refreshToken(token: string): Promise<TokenResponse> {
-  const decoded = jwt.verify(token, JWT_REFRESH_SECRET) as { uid: string };
+  const decoded = jwt.verify(token, env.jwt.refreshSecret) as { uid: string }
 
-  const user = await prisma.user.findUnique({
-    where: { uid: decoded.uid },
-  });
-  if (!user) throw new Error("User not found");
+  const user = await prisma.user.findUnique({ where: { uid: decoded.uid } })
+  if (!user) throw new Error('User not found')
 
-  const newAccessToken = generateAccessToken(user.uid, user.email);
-  const newRefreshToken = generateRefreshToken(user.uid);
+  const newAccessToken = signToken({ uid: user.uid, email: user.email })
+  const newRefreshToken = generateRefreshToken(user.uid)
 
-  return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+  return { accessToken: newAccessToken, refreshToken: newRefreshToken }
 }
 
 // ─── Logout ────────────────────────────────────────────────
-// JWT is stateless — client discards the token on logout
 export async function logoutUser(): Promise<void> {
-  return;
+  return
 }

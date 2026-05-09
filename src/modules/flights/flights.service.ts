@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import prisma from '../../prisma/client.js'
 
 export const getFlightById = async (flightId: string) => {
   return await prisma.flight.findUnique({

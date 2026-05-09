@@ -1,33 +1,27 @@
-import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-
-export interface AuthRequest extends Request {
-  user?: { uid: string; email: string };
-}
+import { Request, Response, NextFunction } from 'express'
+import { verifyToken } from '../utils/jwt.js'
+import type { AuthenticatedRequest } from '../types/index.js'
 
 export const authMiddleware = (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): void => {
-  const authHeader = req.headers.authorization;
+  const authHeader = req.headers.authorization
 
   // Expect header: "Bearer <token>"
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(401).json({ message: "No token provided" });
-    return;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ success: false, message: 'No token provided' })
+    return
   }
 
-  const token = authHeader.split(" ")[1];
+  const token = authHeader.split(' ')[1]
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-      uid: string;
-      email: string;
-    };
-    req.user = decoded; // attach user info to request
-    next();
-  } catch (error) {
-    res.status(401).json({ message: "Invalid or expired token" });
+    const decoded = verifyToken(token)
+    ;(req as AuthenticatedRequest).user = decoded
+    next()
+  } catch {
+    res.status(401).json({ success: false, message: 'Invalid or expired token' })
   }
-};
+}

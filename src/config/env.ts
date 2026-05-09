@@ -9,7 +9,8 @@ export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   jwt: {
     secret: required('JWT_SECRET'),
-    expiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
+    refreshSecret: required('JWT_REFRESH_SECRET'),
+    expiresIn: process.env.JWT_EXPIRES_IN ?? '1h',
   },
   isDev: process.env.NODE_ENV === 'development',
 } as const

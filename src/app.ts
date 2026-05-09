@@ -3,7 +3,7 @@ import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
 import router from './router.js'
-//import { errorHandler, notFoundHandler } from './middleware/error.middleware.js'
+import { errorHandler, notFoundHandler } from './middleware/error.middleware.js'
 
 const app = express()
 
@@ -25,7 +25,7 @@ app.get('/health', (_req, res) => {
 app.use('/api', router)
 
 // Error handling
-//app.use(notFoundHandler)
-//app.use(errorHandler)
+app.use(notFoundHandler)
+app.use(errorHandler)
 
 export default app
