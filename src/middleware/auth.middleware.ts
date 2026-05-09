@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from 'express'
+import { Response, NextFunction } from 'express'
 import { verifyToken } from '../utils/jwt.js'
 import type { AuthenticatedRequest } from '../types/index.js'
 
 export const authMiddleware = (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): void => {
@@ -19,7 +19,7 @@ export const authMiddleware = (
 
   try {
     const decoded = verifyToken(token)
-    ;(req as AuthenticatedRequest).user = decoded
+    req.user = decoded
     next()
   } catch {
     res.status(401).json({ success: false, message: 'Invalid or expired token' })
