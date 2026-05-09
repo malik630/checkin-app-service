@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs'
 import prisma from '../../prisma/client.js'
-import { signToken, verifyToken } from '../../utils/jwt.js'
+import { signToken } from '../../utils/jwt.js'
 import { env } from '../../config/env.js'
 import jwt from 'jsonwebtoken'
 import type {
@@ -14,8 +14,6 @@ import type {
 // ─── Token Helpers ─────────────────────────────────────────
 
 function generateRefreshToken(uid: string): string {
-
-  // Define the JWT_REFRESH_SECRET in your .env file and load it using the env module
   return jwt.sign({ uid }, env.jwt.refreshSecret, { expiresIn: '7d' } as jwt.SignOptions)
 }
 
@@ -33,6 +31,7 @@ export async function loginUser(body: LoginRequest): Promise<LoginResponse> {
   })
 
   const token = signToken({ uid: record.uid, email: record.email })
+  const refreshToken = generateRefreshToken(record.uid)
 
   return {
     user: {
@@ -47,6 +46,7 @@ export async function loginUser(body: LoginRequest): Promise<LoginResponse> {
       token,
     },
     token,
+    refreshToken,
   }
 }
 
@@ -69,6 +69,7 @@ export async function registerUser(body: RegisterRequest): Promise<AuthResponse>
   })
 
   const token = signToken({ uid: newUser.uid, email: newUser.email })
+  const refreshToken = generateRefreshToken(newUser.uid)
 
   return {
     user: {
@@ -83,6 +84,7 @@ export async function registerUser(body: RegisterRequest): Promise<AuthResponse>
       token,
     },
     token,
+    refreshToken,
   }
 }
 
