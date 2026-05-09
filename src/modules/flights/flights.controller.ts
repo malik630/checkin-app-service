@@ -4,7 +4,7 @@ import * as flightsService from './flights.service.js'
 export const getById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params
-    const flight = await flightsService.getFlightById(id)
+    const flight = await flightsService.getFlightById(Array.isArray(id) ? id[0] : id)
     if (!flight) {
       return res.status(404).json({ message: 'Flight not found' })
     }

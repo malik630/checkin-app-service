@@ -1,5 +1,4 @@
-// src/routes/auth.routes.ts
-import { Router } from "express";
+import { RequestHandler, Router } from "express";
 import * as AuthController from "./auth.controller.js";
 import { authMiddleware } from "../../middleware/auth.middleware.js";
 
@@ -11,6 +10,6 @@ router.post("/register", AuthController.register);
 router.post("/refresh", AuthController.refresh);
 
 // ── Protected Routes ───────────────────────────────────────
-router.post("/logout", authMiddleware, AuthController.logout);
+router.post("/logout", authMiddleware as RequestHandler, AuthController.logout);
 
 export default router;
