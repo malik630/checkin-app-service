@@ -24,6 +24,7 @@ export type ProfileResponse = GetProfileResponse;
 
 // ─── Update Profile ────────────────────────────────────────
 export interface UpdateProfileRequest {
+  email?: string;
   fullName?: string;
   name?: string;
   phoneNumber?: string | null;
