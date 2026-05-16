@@ -238,6 +238,31 @@ async function main() {
   })
 
   console.log('Notifications seeded')
+
+  // Preferences
+  await prisma.preferences.createMany({
+    skipDuplicates: true,
+    data: [
+      {
+        uid: fatma.uid,
+        preferredSoutien: true,
+        preferredVisualsAudit: false,
+        preferredChildCare: false,
+        preferredPetCare: false,
+        mealPreference: true,
+      },
+      {
+        uid: youcef.uid,
+        preferredSoutien: false,
+        preferredVisualsAudit: true,
+        preferredChildCare: false,
+        preferredPetCare: true,
+        mealPreference: false,
+      },
+    ],
+  })
+
+  console.log('Preferences seeded')
   console.log('\nSeed complete!')
   console.log('Test credentials:')
   console.log('  Email:    fatma.djerfi@email.com')
