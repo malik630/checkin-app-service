@@ -1,5 +1,5 @@
 // src/controllers/auth.controller.ts
-import { Request, Response } from "express";
+import { Request, RequestHandler, Response } from "express";
 import * as AuthService from "./auth.service.js";
 import type { LoginRequest, RegisterRequest } from "../../types/auth.types.js";
 
@@ -44,4 +44,14 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
   } catch (error: any) {
     res.status(400).json({ message: error.message });
   }
+};
+
+export const googleLogin: RequestHandler = async (req, res) => {
+    try {
+        const { idToken } = req.body;
+        const result = await AuthService.googleLoginUser(idToken);
+        res.status(200).json(result);
+    } catch (error: any) {
+        res.status(401).json({ message: error.message });
+    }
 };
