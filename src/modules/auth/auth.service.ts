@@ -3,6 +3,7 @@ import prisma from '../../prisma/client.js'
 import { signToken } from '../../utils/jwt.js'
 import { env } from '../../config/env.js'
 import jwt from 'jsonwebtoken'
+import { OAuth2Client } from 'google-auth-library';
 import type {
   LoginRequest,
   RegisterRequest,
@@ -48,6 +49,61 @@ export async function loginUser(body: LoginRequest): Promise<LoginResponse> {
     token,
     refreshToken,
   }
+}
+
+
+
+const client = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
+
+export async function verifyGoogleToken(idToken: string) {
+    const ticket = await client.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_WEB_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload) throw new Error('Invalid Google token');
+
+    return {
+        uid: payload.sub,        // Google's unique user ID
+        email: payload.email!,
+        displayName: payload.name ?? '',
+    };
+}
+
+export async function googleLoginUser(idToken: string) {
+    // 1. Verify with Google
+    const googleUser = await verifyGoogleToken(idToken);
+      const existing = await prisma.user.findUnique({ where: { email: googleUser.email } })
+   if (existing) throw new Error('Email already in use')
+   
+
+  const passwordHash = '' 
+
+  const newUser = await prisma.user.create({
+    data: {
+      uid: googleUser.uid,
+      email: googleUser.email,
+      passwordHash,
+      displayName: googleUser.displayName ?? 'User',
+      phoneNumber: '',
+      provider: 'google',
+    },
+  })
+
+  const token = signToken({ uid: newUser.uid, email: newUser.email })
+  const refreshToken = generateRefreshToken(newUser.uid)
+
+    return {
+        user: {
+            uid: newUser.uid,
+            email: newUser.email,
+            displayName: newUser.displayName,
+            phoneNumber: newUser.phoneNumber
+        },
+        token,
+        refreshToken
+    };
 }
 
 // ─── Register ──────────────────────────────────────────────
