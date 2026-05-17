@@ -1,5 +1,8 @@
 import { Request, Response } from 'express'
 import * as checkinService from './checkin.service.js'
+import type {
+  SaveBaggageRequest,
+} from "../../types/checkin.types.js";
 
 /**
  * GET /api/checkin/verify-passport?passportNumber=AB123456&lastName=Djerfi
@@ -45,3 +48,48 @@ export const verifyPassport = async (req: Request, res: Response) => {
     return res.status(500).json({ error: error.message })
   }
 }
+
+// ─── Save Baggage Declaration ──────────────────────────────
+export const saveBaggageDeclaration = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const passengerId = req.body.passengerId;
+    const body: SaveBaggageRequest = req.body;
+
+    const result = await CheckInService.saveBaggageDeclaration(
+      passengerId,
+      body
+    );
+
+    res.status(200).json(result);
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ─── Get Baggage Declaration ───────────────────────────────
+export const getBaggageDeclaration = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const passengerIdParam = req.params.passengerId;
+    const passengerId = Array.isArray(passengerIdParam)
+      ? passengerIdParam[0]
+      : passengerIdParam;
+
+    const result = await CheckInService.getBaggageDeclaration(passengerId);
+
+    res.status(200).json(result);
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
