@@ -123,40 +123,44 @@ async function main() {
   console.log('Bookings seeded')
 
   // Passengers
+  const passenger1Data = {
+    passengerId: 'passenger-fatma-001',
+    bookingId: booking1.bookingId,
+    uid: fatma.uid,
+    firstName: 'Fatma',
+    lastName: 'Djerfi',
+    passportNumber: '307840430',
+    nationality: 'Algerian',
+    dateOfBirth: '2004-05-30',
+    expiryDate: '2027-07-24',
+    seatNumber: '12A',
+    checkinStatus: 'PENDING',
+  }
+
   const passenger1 = await prisma.passenger.upsert({
     where: { passengerId: 'passenger-fatma-001' },
-    update: {},
-    create: {
-      passengerId: 'passenger-fatma-001',
-      bookingId: booking1.bookingId,
-      uid: fatma.uid,
-      firstName: 'Fatma',
-      lastName: 'Djerfi',
-      passportNumber: 'AB123456',
-      nationality: 'Algerian',
-      dateOfBirth: '1990-05-15',
-      expiryDate: '2028-05-14',
-      seatNumber: '12A',
-      checkinStatus: 'PENDING',
-    },
+    update: passenger1Data,
+    create: passenger1Data,
   })
+
+  const passenger2Data = {
+    passengerId: 'passenger-youcef-002',
+    bookingId: booking2.bookingId,
+    uid: youcef.uid,
+    firstName: 'Youcef',
+    lastName: 'Benali',
+    passportNumber: 'CD789012',
+    nationality: 'Algerian',
+    dateOfBirth: '1988-11-23',
+    expiryDate: '2027-11-22',
+    seatNumber: '7C',
+    checkinStatus: 'PENDING',
+  }
 
   const passenger2 = await prisma.passenger.upsert({
     where: { passengerId: 'passenger-youcef-002' },
-    update: {},
-    create: {
-      passengerId: 'passenger-youcef-002',
-      bookingId: booking2.bookingId,
-      uid: youcef.uid,
-      firstName: 'Youcef',
-      lastName: 'Benali',
-      passportNumber: 'CD789012',
-      nationality: 'Algerian',
-      dateOfBirth: '1988-11-23',
-      expiryDate: '2027-11-22',
-      seatNumber: '7C',
-      checkinStatus: 'PENDING',
-    },
+    update: passenger2Data,
+    create: passenger2Data,
   })
 
   console.log('Passengers seeded')
