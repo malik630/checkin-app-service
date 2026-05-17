@@ -1,40 +1,26 @@
-import { Request, Response } from 'express'
+import type { Response } from 'express'
 import * as bookingsService from './bookings.service.js'
+import type { AuthenticatedRequest } from '../../types/index.js'
 
-
-export const getMany = async (req: Request, res: Response) => {
+export const getMany = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const uidRaw = req.query.uid
-    const uid = Array.isArray(uidRaw) ? uidRaw[0] : uidRaw
-
-    if (!uid || typeof uid !== 'string') {
-      return res.status(400).json({ error: 'uid query parameter is required and must be a string' })
-    }
-
-    const bookings = await bookingsService.getAllBookings(uid)
+    const bookings = await bookingsService.getAllBookings(req.user.uid)
     res.json(bookings)
   } catch (error: any) {
     res.status(500).json({ error: error.message })
   }
 }
 
-export const getUpcoming = async (req: Request, res: Response) => {
+export const getUpcoming = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const uidRaw = req.query.uid
-    const uid = Array.isArray(uidRaw) ? uidRaw[0] : uidRaw
-
-    if (!uid || typeof uid !== 'string') {
-      return res.status(400).json({ error: 'uid query parameter is required and must be a string' })
-    }
-
-    const bookings = await bookingsService.getUpcomingBookings(uid)
+    const bookings = await bookingsService.getUpcomingBookings(req.user.uid)
     res.json(bookings)
   } catch (error: any) {
     res.status(500).json({ error: error.message })
   }
 }
 
-export const search = async (req: Request, res: Response) => {
+export const search = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { pnr, lastName } = req.query
 
