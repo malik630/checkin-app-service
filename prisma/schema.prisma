@@ -21,6 +21,7 @@ model User {
   bookings      Booking[]
   passengers    Passenger[]
   notifications Notification[]
+  profile       Profile?
 
   @@map("users")
 }
@@ -116,6 +117,8 @@ model CheckInSession {
   passportScanUrl    String?   @map("passport_scan_url")
   ocrValidation      Json?     @map("ocr_validation")
   baggageDeclaration Json?     @map("baggage_declaration")
+  checkedBaggageCount    Int       @default(0) @map("checked_baggage_count")
+  specialEquipmentCount  Int       @default(0) @map("special_equipment_count")
   specialRequests    Json?     @map("special_requests")
   completedAt        DateTime? @map("completed_at")
   createdAt          DateTime  @default(now()) @map("created_at")
@@ -160,4 +163,26 @@ model Notification {
   flight    Flight?    @relation(fields: [flightId], references: [flightId])
 
   @@map("notifications")
+}
+
+model Profile {
+  profileId      String   @id @default(uuid()) @map("profile_id")
+
+  uid            String   @unique
+
+  fullName       String   @map("full_name")
+  phoneNumber    String?  @map("phone_number")
+  photoUrl       String?  @map("photo_url")
+
+  dateOfBirth    DateTime? @map("date_of_birth")
+
+  nationality    String?
+  gender         String?
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user           User @relation(fields: [uid], references: [uid])
+
+  @@map("profiles")
 }
