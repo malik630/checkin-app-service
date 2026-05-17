@@ -61,9 +61,35 @@ export async function updateProfile(
   if (!user) throw new Error('User not found')
 
   const fullName = body.fullName ?? body.name
+  const phoneNumber = body.phoneNumber ?? body.phone_number
+  const email = body.email?.trim()
+
+  if (email && email !== user.email) {
+    const existingEmail = await prisma.user.findUnique({
+      where: { email },
+    })
+
+    if (existingEmail) {
+      throw new Error('Email already in use')
+    }
+  }
+
+  const userData = {
+    ...(email ? { email } : {}),
+    ...(fullName !== undefined ? { displayName: fullName } : {}),
+    ...(phoneNumber !== undefined ? { phoneNumber } : {}),
+  }
+
   const profileData = {
     ...(fullName !== undefined ? { fullName } : {}),
-    ...(body.phoneNumber !== undefined ? { phoneNumber: body.phoneNumber } : {}),
+    ...(phoneNumber !== undefined ? { phoneNumber } : {}),
+  }
+
+  if (Object.keys(userData).length > 0) {
+    await prisma.user.update({
+      where: { uid },
+      data: userData,
+    })
   }
 
   const existingProfile = await prisma.profile.findUnique({
@@ -71,16 +97,18 @@ export async function updateProfile(
   })
 
   if (existingProfile) {
-    await prisma.profile.update({
-      where: { uid },
-      data: profileData,
-    })
-  } else {
+    if (Object.keys(profileData).length > 0) {
+      await prisma.profile.update({
+        where: { uid },
+        data: profileData,
+      })
+    }
+  } else if (Object.keys(profileData).length > 0) {
     await prisma.profile.create({
       data: {
         uid,
         fullName: fullName ?? user.displayName ?? 'User',
-        phoneNumber: body.phoneNumber ?? user.phoneNumber ?? null,
+        phoneNumber: phoneNumber ?? user.phoneNumber ?? null,
       },
     })
   }
