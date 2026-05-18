@@ -28,6 +28,7 @@ export interface UpdateProfileRequest {
   fullName?: string;
   name?: string;
   phoneNumber?: string | null;
+  phone_number?: string | null;
 }
 
 export interface UpdateProfileResponse {
