@@ -61,62 +61,29 @@ export async function updateProfile(
   if (!user) throw new Error('User not found')
 
   const fullName = body.fullName ?? body.name
-  const email = body.email?.trim()
-  const hasFullName = fullName !== undefined
-  const hasPhoneNumber = body.phoneNumber !== undefined
-  const userData = {
-    ...(email !== undefined ? { email } : {}),
-    ...(hasFullName ? { displayName: fullName } : {}),
-    ...(hasPhoneNumber ? { phoneNumber: body.phoneNumber } : {}),
-  }
   const profileData = {
-    ...(hasFullName ? { fullName } : {}),
-    ...(hasPhoneNumber ? { phoneNumber: body.phoneNumber } : {}),
+    ...(fullName !== undefined ? { fullName } : {}),
+    ...(body.phoneNumber !== undefined ? { phoneNumber: body.phoneNumber } : {}),
   }
 
-  if (email !== undefined && email.length === 0) {
-    throw new Error('Email is required')
-  }
-
-  if (email !== undefined && email !== user.email) {
-    const existingEmail = await prisma.user.findUnique({
-      where: { email },
-    })
-
-    if (existingEmail) {
-      throw new Error('Email already in use')
-    }
-  }
-
-  await prisma.$transaction(async (tx) => {
-    if (Object.keys(userData).length > 0) {
-      await tx.user.update({
-        where: { uid },
-        data: userData,
-      })
-    }
-
-    const existingProfile = await tx.profile.findUnique({
-      where: { uid },
-    })
-
-    if (existingProfile) {
-      if (Object.keys(profileData).length > 0) {
-        await tx.profile.update({
-          where: { uid },
-          data: profileData,
-        })
-      }
-    } else {
-      await tx.profile.create({
-        data: {
-          uid,
-          fullName: fullName ?? user.displayName ?? 'User',
-          phoneNumber: body.phoneNumber ?? user.phoneNumber ?? null,
-        },
-      })
-    }
+  const existingProfile = await prisma.profile.findUnique({
+    where: { uid },
   })
+
+  if (existingProfile) {
+    await prisma.profile.update({
+      where: { uid },
+      data: profileData,
+    })
+  } else {
+    await prisma.profile.create({
+      data: {
+        uid,
+        fullName: fullName ?? user.displayName ?? 'User',
+        phoneNumber: body.phoneNumber ?? user.phoneNumber ?? null,
+      },
+    })
+  }
 
   const updatedUser = await prisma.user.findUnique({
     where: { uid },

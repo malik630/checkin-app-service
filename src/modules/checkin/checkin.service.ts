@@ -8,10 +8,10 @@ import type {
 
 // Save Baggage Declaration
 export async function saveBaggageDeclaration(
-  passengerId: string,
+  uid: string,
   body: SaveBaggageRequest
 ): Promise<SaveBaggageResponse> {
-  if (!passengerId) throw new Error("Passenger ID is required");
+  if (!uid) throw new Error("User ID is required");
   if (!body) throw new Error("Baggage declaration is required");
 
   const checkedBaggageCount = validateBaggageCount(
@@ -22,18 +22,28 @@ export async function saveBaggageDeclaration(
     body.specialEquipmentCount,
     "specialEquipmentCount"
   );
+  const baggageDeclaration = {
+    checkedBaggageCount,
+    specialEquipmentCount,
+  };
 
-  const session = await prisma.checkInSession.findUnique({
-    where: { passengerId },
+  const session = await prisma.checkInSession.findFirst({
+    where: {
+      passenger: { uid },
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
   });
 
   if (!session) throw new Error("Check-in session not found");
 
   const updatedSession = await prisma.checkInSession.update({
-    where: { passengerId },
+    where: { passengerId: session.passengerId },
     data: {
       checkedBaggageCount,
       specialEquipmentCount,
+      baggageDeclaration,
       currentStep: "BAGGAGE_DECLARATION",
     },
   });
@@ -44,10 +54,7 @@ export async function saveBaggageDeclaration(
     data: {
       sessionId: updatedSession.sessionId,
       passengerId: updatedSession.passengerId,
-      baggageDeclaration: {
-        checkedBaggageCount: updatedSession.checkedBaggageCount,
-        specialEquipmentCount: updatedSession.specialEquipmentCount,
-      },
+      baggageDeclaration,
       currentStep: updatedSession.currentStep,
     },
   };
@@ -55,12 +62,17 @@ export async function saveBaggageDeclaration(
 
 // Get Baggage Declaration
 export async function getBaggageDeclaration(
-  passengerId: string
+  uid: string
 ): Promise<GetBaggageResponse> {
-  if (!passengerId) throw new Error("Passenger ID is required");
+  if (!uid) throw new Error("User ID is required");
 
-  const session = await prisma.checkInSession.findUnique({
-    where: { passengerId },
+  const session = await prisma.checkInSession.findFirst({
+    where: {
+      passenger: { uid },
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
   });
 
   if (!session) {

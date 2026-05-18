@@ -4,6 +4,7 @@ import * as CheckInService from "./checkin.service.js";
 import type {
   SaveBaggageRequest,
 } from "../../types/checkin.types.js";
+import type { AuthenticatedRequest } from "../../types/index.js";
 
 // ─── Save Baggage Declaration ──────────────────────────────
 export const saveBaggageDeclaration = async (
@@ -11,11 +12,11 @@ export const saveBaggageDeclaration = async (
   res: Response
 ): Promise<void> => {
   try {
-    const passengerId = req.body.passengerId;
+    const uid = (req as AuthenticatedRequest).user.uid;
     const body: SaveBaggageRequest = req.body;
 
     const result = await CheckInService.saveBaggageDeclaration(
-      passengerId,
+      uid,
       body
     );
 
@@ -34,12 +35,9 @@ export const getBaggageDeclaration = async (
   res: Response
 ): Promise<void> => {
   try {
-    const passengerIdParam = req.params.passengerId;
-    const passengerId = Array.isArray(passengerIdParam)
-      ? passengerIdParam[0]
-      : passengerIdParam;
+    const uid = (req as AuthenticatedRequest).user.uid;
 
-    const result = await CheckInService.getBaggageDeclaration(passengerId);
+    const result = await CheckInService.getBaggageDeclaration(uid);
 
     res.status(200).json(result);
   } catch (error: any) {
