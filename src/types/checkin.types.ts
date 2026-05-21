@@ -5,7 +5,6 @@ export interface BaggageDto {
 }
 
 export interface SaveBaggageRequest {
-  passengerId: string;
   checkedBaggageCount: number;
   specialEquipmentCount: number;
 }

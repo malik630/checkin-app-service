@@ -4,7 +4,8 @@ import type {
   CreateSessionRequest,
   SaveBaggageRequest,
   UpdateStepRequest,
-} from '../../types/checkin.types.js'
+} from '../../types/checkin.types.js';
+import type { AuthenticatedRequest } from "../../types/index.js";
 
 // POST /api/checkin/session
 export const createOrResumeSession = async (

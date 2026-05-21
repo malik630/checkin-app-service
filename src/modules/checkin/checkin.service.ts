@@ -187,7 +187,7 @@ export const verifyPassport = async (
 // Baggage Declaration
 
 export async function saveBaggageDeclaration(
-  passengerId: string,
+  uid: string,
   body: SaveBaggageRequest
 ): Promise<SaveBaggageResponse> {
   if (!passengerId) throw new Error('Passenger ID is required')
@@ -209,7 +209,7 @@ export async function saveBaggageDeclaration(
   if (!session) throw new Error('Check-in session not found')
 
   const updatedSession = await prisma.checkInSession.update({
-    where: { passengerId },
+    where: { passengerId: session.passengerId },
     data: {
       checkedBaggageCount,
       specialEquipmentCount,
@@ -223,17 +223,14 @@ export async function saveBaggageDeclaration(
     data: {
       sessionId: updatedSession.sessionId,
       passengerId: updatedSession.passengerId,
-      baggageDeclaration: {
-        checkedBaggageCount: updatedSession.checkedBaggageCount,
-        specialEquipmentCount: updatedSession.specialEquipmentCount,
-      },
+      baggageDeclaration,
       currentStep: updatedSession.currentStep,
     },
   }
 }
 
 export async function getBaggageDeclaration(
-  passengerId: string
+  uid: string
 ): Promise<GetBaggageResponse> {
   if (!passengerId) throw new Error('Passenger ID is required')
 
