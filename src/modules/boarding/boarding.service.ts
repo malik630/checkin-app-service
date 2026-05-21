@@ -229,7 +229,14 @@ export async function verifyBoardingPass(
 ): Promise<VerifyBoardingPassResponse> {
   const pass = await prisma.boardingPass.findUnique({
     where: { passId },
-    include: BOARDING_PASS_INCLUDE,
+    include: {
+        passenger: {
+            include: {
+                booking: true,
+            },
+        },
+        flight: true,
+    },
   })
 
   if (!pass) {
@@ -244,9 +251,8 @@ export async function verifyBoardingPass(
   const booking = passenger.booking
 
   // Validate: passenger must be CHECKED_IN and booking must be CONFIRMED
-  const isValid =
-    passenger.checkinStatus === 'CHECKED_IN' &&
-    (booking as any).status === 'CONFIRMED'
+  const isValid = passenger.checkinStatus === 'CHECKED_IN'
+    && (booking as any).status === 'CONFIRMED'
 
   if (!isValid) {
     return {
