@@ -67,3 +67,41 @@ export const verify = async (
     R.serverError(res, error.message)
   }
 }
+
+export const verifyByPassId = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { passId } = req.params
+
+    if (!passId || Array.isArray(passId)) {
+      R.badRequest(res, 'passId is required')
+      return
+    }
+
+    const result = await boardingService.verifyBoardingPass(passId)
+
+    if (result.valid && result.data) {
+      res.send(`
+        <html><body style="font-family:sans-serif;padding:24px;text-align:center">
+          <h1 style="color:green">✅ Boarding Pass Valide</h1>
+          <p><b>${result.data.passengerName}</b></p>
+          <p>Vol : ${result.data.flightNumber}</p>
+          <p>Siège : ${result.data.seatNumber} - Porte : ${result.data.gate}</p>
+          <p>Embarquement : ${result.data.boardingTime}</p>
+          <p style="color:gray">Réf : ${result.data.bookingReference}</p>
+        </body></html>
+      `)
+    } else {
+      res.send(`
+        <html><body style="font-family:sans-serif;padding:24px;text-align:center">
+          <h1 style="color:red">❌ Boarding Pass Invalide</h1>
+          <p>${result.message}</p>
+        </body></html>
+      `)
+    }
+  } catch (error: any) {
+    R.serverError(res, error.message)
+  }
+}

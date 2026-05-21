@@ -1,24 +1,75 @@
 import { Request, Response } from 'express'
-import * as checkinService from './checkin.service.js'
+import * as CheckinService from './checkin.service.js'
 import type {
+  CreateSessionRequest,
   SaveBaggageRequest,
-} from "../../types/checkin.types.js";
+  UpdateStepRequest,
+} from '../../types/checkin.types.js'
 
-/**
- * GET /api/checkin/verify-passport?passportNumber=AB123456&lastName=Djerfi
- *
- * Verifies that the scanned passport belongs to a passenger in the DB.
- * Returns the passenger record on match, 404 on mismatch.
- */
+// POST /api/checkin/session
+export const createOrResumeSession = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { passengerId, bookingId } = req.body as CreateSessionRequest
+
+    if (!passengerId || typeof passengerId !== 'string') {
+      res.status(400).json({ success: false, message: 'passengerId is required' })
+      return
+    }
+    if (!bookingId || typeof bookingId !== 'string') {
+      res.status(400).json({ success: false, message: 'bookingId is required' })
+      return
+    }
+
+    const result = await CheckinService.createOrResumeSession(passengerId, bookingId)
+    res.status(201).json(result)
+  } catch (error: any) {
+    const status = error.message.includes('not yet open') || error.message.includes('closed')
+      ? 422
+      : error.message.includes('not found')
+      ? 404
+      : 400
+    res.status(status).json({ success: false, message: error.message })
+  }
+}
+
+// PATCH /api/checkin/session/step
+export const advanceSessionStep = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { passengerId, step } = req.body as UpdateStepRequest
+
+    if (!passengerId || typeof passengerId !== 'string') {
+      res.status(400).json({ success: false, message: 'passengerId is required' })
+      return
+    }
+    if (!step || typeof step !== 'string') {
+      res.status(400).json({ success: false, message: 'step is required' })
+      return
+    }
+
+    const result = await CheckinService.advanceSessionStep(passengerId, step)
+    res.status(200).json(result)
+  } catch (error: any) {
+    const status = error.message.includes('not found') ? 404 : 400
+    res.status(status).json({ success: false, message: error.message })
+  }
+}
+
+// GET /api/checkin/verify-passport
 export const verifyPassport = async (req: Request, res: Response) => {
   try {
-    const { 
-      passportNumber, 
-      lastName, 
-      firstName, 
+    const {
+      passportNumber,
+      lastName,
+      firstName,
       nationality,
       dateOfBirth,
-      expiryDate 
+      expiryDate,
     } = req.query
 
     if (!passportNumber || typeof passportNumber !== 'string') {
@@ -28,8 +79,8 @@ export const verifyPassport = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'lastName query param is required' })
     }
 
-    const passenger = await checkinService.verifyPassport(
-      passportNumber, 
+    const passenger = await CheckinService.verifyPassport(
+      passportNumber,
       lastName,
       firstName as string,
       nationality as string,
@@ -49,47 +100,34 @@ export const verifyPassport = async (req: Request, res: Response) => {
   }
 }
 
-// ─── Save Baggage Declaration ──────────────────────────────
+// POST /api/checkin/baggage
 export const saveBaggageDeclaration = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const passengerId = req.body.passengerId;
-    const body: SaveBaggageRequest = req.body;
-
-    const result = await CheckInService.saveBaggageDeclaration(
-      passengerId,
-      body
-    );
-
-    res.status(200).json(result);
+    const passengerId = req.body.passengerId
+    const body: SaveBaggageRequest = req.body
+    const result = await CheckinService.saveBaggageDeclaration(passengerId, body)
+    res.status(200).json(result)
   } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    res.status(400).json({ success: false, message: error.message })
   }
-};
+}
 
-// ─── Get Baggage Declaration ───────────────────────────────
+// GET /api/checkin/baggage/:passengerId
 export const getBaggageDeclaration = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const passengerIdParam = req.params.passengerId;
+    const passengerIdParam = req.params.passengerId
     const passengerId = Array.isArray(passengerIdParam)
       ? passengerIdParam[0]
-      : passengerIdParam;
-
-    const result = await CheckInService.getBaggageDeclaration(passengerId);
-
-    res.status(200).json(result);
+      : passengerIdParam
+    const result = await CheckinService.getBaggageDeclaration(passengerId)
+    res.status(200).json(result)
   } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    res.status(400).json({ success: false, message: error.message })
   }
-};
+}

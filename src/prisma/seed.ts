@@ -8,7 +8,7 @@ async function main() {
   console.log('Seeding database...')
 
   // Users
-  const passwordHash = await bcrypt.hash('Password123', 12)
+  /*const passwordHash = await bcrypt.hash('Password123', 12)
 
   const fatma = await prisma.user.upsert({
     where: { email: 'fatma.djerfi@email.com' },
@@ -161,11 +161,31 @@ async function main() {
     where: { passengerId: 'passenger-youcef-002' },
     update: passenger2Data,
     create: passenger2Data,
+  })*/
+
+  const passenger3Data = {
+    passengerId: 'passenger-melliti-001',
+    bookingId: 'booking-001',
+    uid: 'user-fatma-001',
+    firstName: 'Abdelmalek',
+    lastName: 'Melliti',
+    passportNumber: '196118578',
+    nationality: 'Algerian',
+    dateOfBirth: '2004-12-25',
+    expiryDate: '2024-01-22',
+    seatNumber: '12A',
+    checkinStatus: 'PENDING',
+  }
+
+  const passenger3 = await prisma.passenger.upsert({
+    where: { passengerId: 'passenger-melliti-001' },
+    update: passenger3Data,
+    create: passenger3Data,
   })
 
   console.log('Passengers seeded')
 
-  // Seat map for flight 1
+  /*// Seat map for flight 1
   const seatClasses = [
     // Business (rows 1-3)
     ...['A', 'B', 'C', 'D'].flatMap(col =>
@@ -246,7 +266,7 @@ async function main() {
   console.log('Test credentials:')
   console.log('  Email:    fatma.djerfi@email.com')
   console.log('  Password: Password123!')
-  console.log('  PNR:      BB9XC2  |  Last name: Djerfi')
+  console.log('  PNR:      BB9XC2  |  Last name: Djerfi')*/
 }
 
 main()
