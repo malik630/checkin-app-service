@@ -1,11 +1,12 @@
-import { RequestHandler, Router } from "express";
-import * as CheckInController from "./checkin.controller.js";
-import { authMiddleware } from "../../middleware/auth.middleware.js";
+import { RequestHandler, Router } from 'express'
+import * as CheckInController from './checkin.controller.js'
 
-const router = Router();
+const router = Router()
 
-// ── Protected Routes ───────────────────────────────────────
-router.post("/baggage", authMiddleware as RequestHandler, CheckInController.saveBaggageDeclaration);
-router.get("/baggage/:passengerId", authMiddleware as RequestHandler, CheckInController.getBaggageDeclaration);
+router.post('/session', CheckInController.createOrResumeSession as RequestHandler)
+router.patch('/session/step', CheckInController.advanceSessionStep as RequestHandler)
+router.get('/verify-passport', CheckInController.verifyPassport as RequestHandler)
+router.post('/baggage', CheckInController.saveBaggageDeclaration as RequestHandler)
+router.get('/baggage/:passengerId', CheckInController.getBaggageDeclaration as RequestHandler)
 
-export default router;
+export default router
