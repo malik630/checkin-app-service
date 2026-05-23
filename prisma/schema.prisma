@@ -22,6 +22,7 @@ model User {
   passengers    Passenger[]
   notifications Notification[]
   profile       Profile?
+  preferences   Preferences?
 
   @@map("users")
 }
@@ -185,4 +186,21 @@ model Profile {
   user           User @relation(fields: [uid], references: [uid])
 
   @@map("profiles")
+}
+
+model Preferences {
+  preferenceId           String   @id @default(uuid()) @map("preference_id")
+  uid                    String   @map("uid")
+  preferredSoutien       Boolean  @default(false) @map("preferred_soutien")
+  preferredVisualsAudit  Boolean  @default(false) @map("preferred_visuals_audit")
+  preferredChildCare     Boolean  @default(false) @map("preferred_child_care")
+  preferredPetCare       Boolean  @default(false) @map("preferred_pet_care")
+  mealPreference         Boolean  @default(false) @map("meal_preference")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  user                   User     @relation(fields: [uid], references: [uid])
+
+  @@unique([uid])
+  @@map("preferences")
 }
