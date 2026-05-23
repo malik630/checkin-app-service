@@ -24,31 +24,7 @@ export function startBookingStatusCron() {
         console.log(`[Cron] Updated ${toOpen.count} bookings from CONFIRMED to CHECK_IN_OPEN.`)
       }
 
-      // 2. CHECK_IN_OPEN -> CHECKED_IN (if any passenger on the booking has checked in)
-      const toCheckIn = await prisma.booking.findMany({
-        where: {
-          status: 'CHECK_IN_OPEN',
-          passengers: {
-            some: {
-              checkinStatus: { in: ['CHECKED_IN', 'COMPLETED'] }
-            }
-          }
-        }
-      })
-      if (toCheckIn.length > 0) {
-        const ids = toCheckIn.map(b => b.bookingId)
-        await prisma.booking.updateMany({
-          where: {
-            bookingId: { in: ids }
-          },
-          data: {
-            status: 'CHECKED_IN'
-          }
-        })
-        console.log(`[Cron] Updated ${toCheckIn.length} bookings to CHECKED_IN based on passenger status.`)
-      }
-
-      // 3. Any non-PASSED status -> PASSED (flight departed)
+      // 2. Any non-PASSED status -> PASSED (flight departed)
       const toPassed = await prisma.booking.updateMany({
         where: {
           status: { not: 'PASSED' },
