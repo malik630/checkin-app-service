@@ -21,16 +21,13 @@ router.use('/auth', authRoutes)
 
 router.use('/bookings', authMiddleware as RequestHandler, bookingsRoutes)
 router.use('/flights', authMiddleware as RequestHandler, flightsRoutes)
-
-router.use('/checkin', checkinRoutes)
-router.use('/selectseats', seatsRoutes)
+router.use('/boarding', boardingRoutes)
+router.use('/checkin', authMiddleware as RequestHandler, checkinRoutes)
+router.use('/selectseats', authMiddleware as RequestHandler, seatsRoutes)
 router.use('/preferences', preferencesRoutes)
 /*
 =======
-router.use('/checkin', authMiddleware as RequestHandler, checkinRoutes)
-router.use('/selectseats', authMiddleware as RequestHandler, seatsRoutes)
 
-router.use('/boarding', boardingRoutes)
 //router.use('/notifications', authMiddleware as RequestHandler, notificationsRoutes)
 */
 export default router;

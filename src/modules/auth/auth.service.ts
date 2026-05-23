@@ -72,38 +72,27 @@ export async function verifyGoogleToken(idToken: string) {
 }
 
 export async function googleLoginUser(idToken: string) {
-    // 1. Verify with Google
     const googleUser = await verifyGoogleToken(idToken);
-      const existing = await prisma.user.findUnique({ where: { email: googleUser.email } })
-   if (existing) throw new Error('Email already in use')
-   
 
-  const passwordHash = '' 
+    let user = await prisma.user.findUnique({ where: { email: googleUser.email } });
 
-  const newUser = await prisma.user.create({
-    data: {
-      uid: googleUser.uid,
-      email: googleUser.email,
-      passwordHash,
-      displayName: googleUser.displayName ?? 'User',
-      phoneNumber: '',
-      provider: 'google',
-    },
-  })
+    if (!user) {
+        user = await prisma.user.create({
+            data: {
+                uid: googleUser.uid,
+                email: googleUser.email,
+                passwordHash: '',
+                displayName: googleUser.displayName ?? 'User',
+                phoneNumber: '',
+                provider: 'google',
+            },
+        });
+    }
 
-  const token = signToken({ uid: newUser.uid, email: newUser.email })
-  const refreshToken = generateRefreshToken(newUser.uid)
+    const token = signToken({ uid: user.uid, email: user.email });
+    const refreshToken = generateRefreshToken(user.uid);
 
-    return {
-        user: {
-            uid: newUser.uid,
-            email: newUser.email,
-            displayName: newUser.displayName,
-            phoneNumber: newUser.phoneNumber
-        },
-        token,
-        refreshToken
-    };
+    return { user: { uid: user.uid, email: user.email, displayName: user.displayName, phoneNumber: user.phoneNumber }, token, refreshToken };
 }
 
 // ─── Register ──────────────────────────────────────────────
