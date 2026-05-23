@@ -18,11 +18,12 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   lastLogin    DateTime @default(now()) @map("last_login")
 
-  bookings      Booking[]
-  passengers    Passenger[]
-  notifications Notification[]
-  profile       Profile?
-  preferences   Preferences?
+  bookings        Booking[]
+  notifications   Notification[]
+  profile         Profile?
+  preferences     Preferences?
+  checkInSessions CheckInSession[]
+  boardingPasses  BoardingPass[]
 
   @@map("users")
 }
@@ -53,20 +54,23 @@ model Flight {
 }
 
 model Booking {
-  bookingId       String    @id @default(uuid()) @map("booking_id")
-  uid             String
-  flightId        String    @map("flight_id")
-  pnr             String    @unique
-  lastName        String    @map("last_name")
-  bookingRef      String    @unique @map("booking_ref")
-  status          String    @default("CONFIRMED")
-  checkinDeadline DateTime? @map("checkin_deadline")
-  createdAt       DateTime  @default(now()) @map("created_at")
+  bookingId        String    @id @default(uuid()) @map("booking_id")
+  uid              String
+  flightId         String    @map("flight_id")
+  pnr              String    @unique
+  lastName         String    @map("last_name")
+  bookingRef       String    @unique @map("booking_ref")
+  status           String    @default("CONFIRMED")
+  checkinDeadline  DateTime? @map("checkin_deadline")
+  createdAt        DateTime  @default(now()) @map("created_at")
 
-  user            User             @relation(fields: [uid], references: [uid])
-  flight          Flight           @relation(fields: [flightId], references: [flightId])
-  passengers      Passenger[]
-  checkInSessions CheckInSession[]
+  // FK pointing to the CheckInSession that was created for this booking
+  checkinSessionId String?          @unique @map("checkin_session_id")
+
+  user           User            @relation(fields: [uid], references: [uid])
+  flight         Flight          @relation(fields: [flightId], references: [flightId])
+  passengers     Passenger[]
+  checkinSession CheckInSession? @relation(fields: [checkinSessionId], references: [sessionId])
 
   @@map("bookings")
 }
@@ -74,7 +78,6 @@ model Booking {
 model Passenger {
   passengerId    String  @id @default(uuid()) @map("passenger_id")
   bookingId      String  @map("booking_id")
-  uid            String
   firstName      String  @map("first_name")
   lastName       String  @map("last_name")
   passportNumber String  @map("passport_number")
@@ -85,7 +88,6 @@ model Passenger {
   checkinStatus  String  @default("PENDING") @map("checkin_status")
 
   booking        Booking         @relation(fields: [bookingId], references: [bookingId])
-  user           User            @relation(fields: [uid], references: [uid])
   checkInSession CheckInSession?
   boardingPass   BoardingPass?
   notifications  Notification[]
@@ -111,22 +113,24 @@ model SeatMap {
 }
 
 model CheckInSession {
-  sessionId          String    @id @default(uuid()) @map("session_id")
-  passengerId        String    @unique @map("passenger_id")
-  bookingId          String    @map("booking_id")
-  currentStep        String    @default("PASSPORT_SCAN") @map("current_step")
-  passportScanUrl    String?   @map("passport_scan_url")
-  ocrValidation      Json?     @map("ocr_validation")
-  baggageDeclaration Json?     @map("baggage_declaration")
-  checkedBaggageCount    Int       @default(0) @map("checked_baggage_count")
-  specialEquipmentCount  Int       @default(0) @map("special_equipment_count")
-  specialRequests    Json?     @map("special_requests")
-  completedAt        DateTime? @map("completed_at")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
+  sessionId             String    @id @default(uuid()) @map("session_id")
+  passengerId           String    @unique @map("passenger_id")
+  uid                   String    @map("uid")
+  currentStep           String    @default("PASSPORT_SCAN") @map("current_step")
+  passportScanUrl       String?   @map("passport_scan_url")
+  ocrValidation         Json?     @map("ocr_validation")
+  baggageDeclaration    Json?     @map("baggage_declaration")
+  checkedBaggageCount   Int       @default(0) @map("checked_baggage_count")
+  specialEquipmentCount Int       @default(0) @map("special_equipment_count")
+  specialRequests       Json?     @map("special_requests")
+  completedAt           DateTime? @map("completed_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
   passenger Passenger @relation(fields: [passengerId], references: [passengerId])
-  booking   Booking   @relation(fields: [bookingId], references: [bookingId])
+  user      User      @relation(fields: [uid], references: [uid])
+  // Back-relation: the Booking that owns this session
+  booking   Booking?
 
   @@map("checkin_sessions")
 }
@@ -134,6 +138,7 @@ model CheckInSession {
 model BoardingPass {
   passId       String   @id @default(uuid()) @map("pass_id")
   passengerId  String   @unique @map("passenger_id")
+  uid          String   @map("uid")
   flightId     String   @map("flight_id")
   qrCode       String   @map("qr_code")
   seatNumber   String   @map("seat_number")
@@ -143,6 +148,7 @@ model BoardingPass {
   issuedAt     DateTime @default(now()) @map("issued_at")
 
   passenger Passenger @relation(fields: [passengerId], references: [passengerId])
+  user      User      @relation(fields: [uid], references: [uid])
   flight    Flight    @relation(fields: [flightId], references: [flightId])
 
   @@map("boarding_passes")
@@ -167,39 +173,34 @@ model Notification {
 }
 
 model Profile {
-  profileId      String   @id @default(uuid()) @map("profile_id")
+  profileId   String    @id @default(uuid()) @map("profile_id")
+  uid         String    @unique
+  fullName    String    @map("full_name")
+  phoneNumber String?   @map("phone_number")
+  photoUrl    String?   @map("photo_url")
+  dateOfBirth DateTime? @map("date_of_birth")
+  nationality String?
+  gender      String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  uid            String   @unique
-
-  fullName       String   @map("full_name")
-  phoneNumber    String?  @map("phone_number")
-  photoUrl       String?  @map("photo_url")
-
-  dateOfBirth    DateTime? @map("date_of_birth")
-
-  nationality    String?
-  gender         String?
-
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-
-  user           User @relation(fields: [uid], references: [uid])
+  user User @relation(fields: [uid], references: [uid])
 
   @@map("profiles")
 }
 
 model Preferences {
-  preferenceId           String   @id @default(uuid()) @map("preference_id")
-  uid                    String   @map("uid")
-  preferredSoutien       Boolean  @default(false) @map("preferred_soutien")
-  preferredVisualsAudit  Boolean  @default(false) @map("preferred_visuals_audit")
-  preferredChildCare     Boolean  @default(false) @map("preferred_child_care")
-  preferredPetCare       Boolean  @default(false) @map("preferred_pet_care")
-  mealPreference         Boolean  @default(false) @map("meal_preference")
-  createdAt              DateTime @default(now()) @map("created_at")
-  updatedAt              DateTime @updatedAt @map("updated_at")
+  preferenceId          String   @id @default(uuid()) @map("preference_id")
+  uid                   String   @map("uid")
+  preferredSoutien      Boolean  @default(false) @map("preferred_soutien")
+  preferredVisualsAudit Boolean  @default(false) @map("preferred_visuals_audit")
+  preferredChildCare    Boolean  @default(false) @map("preferred_child_care")
+  preferredPetCare      Boolean  @default(false) @map("preferred_pet_care")
+  mealPreference        Boolean  @default(false) @map("meal_preference")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
-  user                   User     @relation(fields: [uid], references: [uid])
+  user User @relation(fields: [uid], references: [uid])
 
   @@unique([uid])
   @@map("preferences")

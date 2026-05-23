@@ -140,6 +140,7 @@ export async function generateBoardingPass(
     create: {
       passId,
       passengerId,
+      uid: session.uid,
       flightId: flight.flightId,
       qrCode,
       seatNumber: passenger.seatNumber,
@@ -148,7 +149,6 @@ export async function generateBoardingPass(
       terminal: flight.terminal ?? null,
     },
     update: {
-      // Re-generate in case seat or gate changed
       qrCode,
       seatNumber: passenger.seatNumber,
       gate: flight.gate,
@@ -191,23 +191,15 @@ export async function generateBoardingPass(
 export async function getBoardingPassByUid(
   uid: string
 ): Promise<GenerateBoardingPassResponse> {
-  // A user may have several passengers but we return the most recent active one
-  const passenger = await prisma.passenger.findFirst({
-    where: { uid, checkinStatus: 'CHECKED_IN' },
-    orderBy: { booking: { createdAt: 'desc' } },
-  })
-
-  if (!passenger) {
-    throw new Error('No checked-in passenger found for this account')
-  }
-
-  const pass = await prisma.boardingPass.findUnique({
-    where: { passengerId: passenger.passengerId },
+  // BoardingPass now carries uid directly — return the most recently issued one
+  const pass = await prisma.boardingPass.findFirst({
+    where: { uid },
+    orderBy: { issuedAt: 'desc' },
     include: BOARDING_PASS_INCLUDE,
   })
 
   if (!pass) {
-    throw new Error('Boarding pass not found')
+    throw new Error('No boarding pass found for this account')
   }
 
   return {

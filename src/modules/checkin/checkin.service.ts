@@ -51,6 +51,9 @@ export async function createOrResumeSession(
     throw new Error('Passenger not found for this booking')
   }
 
+  // uid lives on the Booking (the user who owns the reservation)
+  const uid = passenger.booking.uid
+
   const departureTime = passenger.booking.flight.departureTime
   const now = new Date()
   /*const hoursUntilDeparture =
@@ -69,6 +72,7 @@ export async function createOrResumeSession(
 
   const existing = await prisma.checkInSession.findUnique({
     where: { passengerId },
+    include: { booking: true },
   })
 
   if (existing) {
@@ -78,7 +82,7 @@ export async function createOrResumeSession(
       data: {
         sessionId: existing.sessionId,
         passengerId: existing.passengerId,
-        bookingId: existing.bookingId,
+        bookingId: existing.booking?.bookingId || '',
         currentStep: existing.currentStep,
       },
     }
@@ -87,9 +91,15 @@ export async function createOrResumeSession(
   const session = await prisma.checkInSession.create({
     data: {
       passengerId,
-      bookingId,
+      uid: uid!,
       currentStep: 'PASSPORT_SCAN',
     },
+  })
+
+  // Link the Booking to this session (FK is on the Booking side)
+  await prisma.booking.update({
+    where: { bookingId },
+    data: { checkinSessionId: session.sessionId },
   })
 
   return {
@@ -98,7 +108,7 @@ export async function createOrResumeSession(
     data: {
       sessionId: session.sessionId,
       passengerId: session.passengerId,
-      bookingId: session.bookingId,
+      bookingId,
       currentStep: session.currentStep,
     },
   }
@@ -187,7 +197,7 @@ export const verifyPassport = async (
 // Baggage Declaration
 
 export async function saveBaggageDeclaration(
-  uid: string,
+  passengerId: string,
   body: SaveBaggageRequest
 ): Promise<SaveBaggageResponse> {
   if (!passengerId) throw new Error('Passenger ID is required')
@@ -223,14 +233,17 @@ export async function saveBaggageDeclaration(
     data: {
       sessionId: updatedSession.sessionId,
       passengerId: updatedSession.passengerId,
-      baggageDeclaration,
+      baggageDeclaration: {
+        checkedBaggageCount: updatedSession.checkedBaggageCount,
+        specialEquipmentCount: updatedSession.specialEquipmentCount,
+      },
       currentStep: updatedSession.currentStep,
     },
   }
 }
 
 export async function getBaggageDeclaration(
-  uid: string
+  passengerId: string
 ): Promise<GetBaggageResponse> {
   if (!passengerId) throw new Error('Passenger ID is required')
 
