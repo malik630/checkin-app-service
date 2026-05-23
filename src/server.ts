@@ -3,6 +3,8 @@ import app from './app.js'
 import { env } from './config/env.js'
 import prisma from './prisma/client.js'
 
+import { startBookingStatusCron } from './modules/bookings/bookings.cron.js'
+
 const start = async () => {
   try {
     // Verify DB connection on startup
@@ -13,6 +15,7 @@ const start = async () => {
       console.log(`Server running on http://localhost:${env.port}`)
       console.log(`API docs: http://localhost:${env.port}/api`)
       console.log(`Environment: ${env.nodeEnv}`)
+      startBookingStatusCron()
     })
   } catch (err) {
     console.error('Failed to start server:', err)
