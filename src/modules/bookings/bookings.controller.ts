@@ -4,7 +4,7 @@ import type { AuthenticatedRequest } from '../../types/index.js'
 
 export const getMany = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const bookings = await bookingsService.getAllBookings(req.user.uid)
+    const bookings = await bookingsService.getAllBookings()
     res.json(bookings)
   } catch (error: any) {
     res.status(500).json({ error: error.message })
