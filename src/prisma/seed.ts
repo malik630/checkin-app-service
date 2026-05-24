@@ -251,7 +251,7 @@ async function main() {
       bookingId: booking1.bookingId,
       firstName: 'Fatma',
       lastName: 'Djerfi',
-      passportNumber: '307840431',
+      passportNumber: '307840430',
       nationality: 'Algerian',
       dateOfBirth: '2004-05-30',
       expiryDate: '2027-07-24',
