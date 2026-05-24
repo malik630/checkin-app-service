@@ -54,18 +54,18 @@ model Flight {
 }
 
 model Booking {
-  bookingId        String    @id @default(uuid()) @map("booking_id")
-  uid              String
-  flightId         String    @map("flight_id")
-  pnr              String    @unique
-  lastName         String    @map("last_name")
-  bookingRef       String    @unique @map("booking_ref")
-  status           String    @default("CONFIRMED")
-  checkinDeadline  DateTime? @map("checkin_deadline")
-  createdAt        DateTime  @default(now()) @map("created_at")
+  bookingId       String    @id @default(uuid()) @map("booking_id")
+  uid             String
+  flightId        String    @map("flight_id")
+  pnr             String    @unique
+  lastName        String    @map("last_name")
+  bookingRef      String    @map("booking_ref")
+  status          String    @default("CONFIRMED")
+  checkinDeadline DateTime? @map("checkin_deadline")
+  createdAt       DateTime  @default(now()) @map("created_at")
 
   // FK pointing to the CheckInSession that was created for this booking
-  checkinSessionId String?          @unique @map("checkin_session_id")
+  checkinSessionId String? @unique @map("checkin_session_id")
 
   user           User            @relation(fields: [uid], references: [uid])
   flight         Flight          @relation(fields: [flightId], references: [flightId])
