@@ -29,6 +29,12 @@ export interface GenerateBoardingPassResponse {
   data: BoardingPassDto
 }
 
+export interface GetAllBoardingPassesResponse {
+  success: boolean
+  message: string
+  data: BoardingPassDto[]
+}
+
 export interface VerifyBoardingPassResponse {
   success: boolean
   valid: boolean
