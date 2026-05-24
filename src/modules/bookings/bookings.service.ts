@@ -32,9 +32,17 @@ export const getAllBookings = async () => {
 export const getUpcomingBookings = async (uid: string) => {
   const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
   try {
+    // 1. Fetch check-in sessions by user id
+    const sessions = await prisma.checkInSession.findMany({
+      where: { uid },
+      select: { sessionId: true }
+    })
+    const sessionIds = sessions.map(s => s.sessionId)
+
+    // 2. Fetch bookings by check-in session ID
     const bookings = await prisma.booking.findMany({
       where: {
-        checkinSession: { uid },
+        checkinSessionId: { in: sessionIds },
         flight: {
           departureTime: { gte: threeDaysAgo },
         },
