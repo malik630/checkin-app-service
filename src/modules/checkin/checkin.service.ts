@@ -36,7 +36,8 @@ const normalizeDate = (dateStr: string): string => {
 
 export async function createOrResumeSession(
   passengerId: string,
-  bookingId: string
+  bookingId: string,
+  uid: string
 ): Promise<CreateSessionResponse> {
   const passenger = await prisma.passenger.findFirst({
     where: { passengerId, bookingId },
@@ -50,9 +51,6 @@ export async function createOrResumeSession(
   if (!passenger) {
     throw new Error('Passenger not found for this booking')
   }
-
-  // uid lives on the Booking (the user who owns the reservation)
-  const uid = passenger.booking.uid
 
   const departureTime = passenger.booking.flight.departureTime
   const now = new Date()
@@ -91,7 +89,7 @@ export async function createOrResumeSession(
   const session = await prisma.checkInSession.create({
     data: {
       passengerId,
-      uid: uid!,
+      uid,
       currentStep: 'PASSPORT_SCAN',
     },
   })
@@ -99,9 +97,11 @@ export async function createOrResumeSession(
   // Link the Booking to this session (FK is on the Booking side)
   await prisma.booking.update({
     where: { bookingId },
-    data: { checkinSessionId: session.sessionId },
+    data: { 
+      uid,
+      checkinSessionId: session.sessionId,
+    },
   })
-
   return {
     success: true,
     message: 'Check-in session created',
@@ -163,35 +163,32 @@ export const verifyPassport = async (
   dateOfBirth?: string,
   expiryDate?: string
 ) => {
-  const normalizedDob = dateOfBirth ? normalizeDate(dateOfBirth) : null
-  const normalizedExpiry = expiryDate ? normalizeDate(expiryDate) : null
-
-  console.log('--- VERIFYING PASSPORT ---')
-  console.log('Passport:', passportNumber)
-  console.log('Last Name:', lastName)
-  console.log('Normalized DOB:', normalizedDob)
-  console.log('Normalized Expiry:', normalizedExpiry)
-
-  const passenger = await prisma.passenger.findFirst({
+  const passengers = await prisma.passenger.findMany({
     where: {
-      passportNumber: {
-        equals: passportNumber.trim(),
-        mode: 'insensitive',
-      },
-      lastName: {
-        equals: lastName.trim(),
-        mode: 'insensitive',
-      },
+      passportNumber: { equals: passportNumber.trim(), mode: 'insensitive' },
+      lastName: { equals: lastName.trim(), mode: 'insensitive' },
+    },
+    include: {
+      booking: true,
     },
   })
 
-  if (!passenger) {
-    console.log('Result: PASSENGER NOT FOUND (Checked Passport + LastName only)')
-  } else {
-    console.log('Result: FOUND PASSENGER', passenger.firstName, passenger.lastName)
-  }
+  if (!passengers.length) return null
 
-  return passenger
+  console.log('Passengers found:', passengers.map(p => ({
+    passengerId: p.passengerId,
+    bookingId: p.bookingId,
+    bookingStatus: p.booking.status,
+    checkinStatus: p.checkinStatus,
+  })))
+
+  const PRIORITY = ['CONFIRMED', 'CHECK_IN_OPEN']
+
+  const match = passengers.find(p => PRIORITY.includes(p.booking.status) && p.checkinStatus === 'PENDING')
+    ?? passengers.find(p => PRIORITY.includes(p.booking.status))
+    ?? passengers[0]
+
+  return match
 }
 
 // Baggage Declaration

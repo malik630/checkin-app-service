@@ -2,16 +2,10 @@ import prisma from '../../prisma/client.js'
 import type {
   BoardingPassDto,
   GenerateBoardingPassResponse,
+  GetAllBoardingPassesResponse,
   VerifyBoardingPassResponse,
 } from '../../types/boarding.types.js'
 
-// Helpers
-
-/*
-  Builds the QR code payload stored in the boarding pass.
-  The QR contains only the passId so the scanner must call
-  POST /api/boarding/verify to resolve flight data server-side.
- */
 function buildQrCode(passId: string): string {
   return `CHECKIN_PASS:${passId}`
 }
@@ -30,9 +24,7 @@ function toDto(pass: {
     firstName: string
     lastName: string
     checkinStatus: string
-    booking: {
-      bookingRef: string
-    }
+    booking: { bookingRef: string }
   }
   flight: {
     flightNumber: string
@@ -77,19 +69,9 @@ const BOARDING_PASS_INCLUDE = {
   flight: true,
 } as const
 
-// Generate Boarding Pass
-
-/**
- * Called after step 5 (special requests) of the check-in flow.
- * - Verifies the check-in session is complete (step = SPECIAL_REQUESTS).
- * - Creates or replaces the boarding pass in the DB.
- * - Marks the passenger checkinStatus as CHECKED_IN.
- * - Returns the full boarding pass DTO.
- */
 export async function generateBoardingPass(
   passengerId: string
 ): Promise<GenerateBoardingPassResponse> {
-  // 1. Load the check-in session and verify it reached the final step
   const session = await prisma.checkInSession.findUnique({
     where: { passengerId },
     include: {
@@ -103,38 +85,22 @@ export async function generateBoardingPass(
     },
   })
 
-  if (!session) {
-    throw new Error('No check-in session found for this passenger')
-  }
+  if (!session) throw new Error('No check-in session found for this passenger')
 
-  const ALLOWED_STEPS = [
-    'SPECIAL_REQUESTS',
-    'BAGGAGE_DECLARATION', // fallback: allow if baggage was the last completed step
-    'COMPLETED',
-  ]
-
+  const ALLOWED_STEPS = ['PREFERENCES_COMPLETED', 'BAGGAGE_DECLARATION', 'COMPLETED']
   if (!ALLOWED_STEPS.includes(session.currentStep)) {
-    throw new Error(
-      `Check-in is not yet complete. Current step: ${session.currentStep}`
-    )
+    throw new Error(`Check-in is not yet complete. Current step: ${session.currentStep}`)
   }
 
   const passenger = session.passenger
   const flight = passenger.booking.flight
 
-  if (!passenger.seatNumber) {
-    throw new Error('Passenger has no assigned seat')
-  }
+  if (!passenger.seatNumber) throw new Error('Passenger has no assigned seat')
+  if (!flight.gate || !flight.boardingTime) throw new Error('Flight gate or boarding time is missing')
 
-  if (!flight.gate || !flight.boardingTime) {
-    throw new Error('Flight gate or boarding time is missing')
-  }
-
-  // 2. Build a deterministic passId so upsert is idempotent
   const passId = `BP-${passengerId}`
   const qrCode = buildQrCode(passId)
 
-  // 3. Upsert boarding pass (create or replace on re-check-in)
   await prisma.boardingPass.upsert({
     where: { passengerId },
     create: {
@@ -158,7 +124,6 @@ export async function generateBoardingPass(
     },
   })
 
-  // 4. Mark the session as COMPLETED and the passenger as CHECKED_IN
   await prisma.checkInSession.update({
     where: { passengerId },
     data: { currentStep: 'COMPLETED', completedAt: new Date() },
@@ -169,82 +134,58 @@ export async function generateBoardingPass(
     data: { checkinStatus: 'CHECKED_IN' },
   })
 
-  // 5. Reload the full pass with relations for the DTO
   const fullPass = await prisma.boardingPass.findUniqueOrThrow({
     where: { passengerId },
     include: BOARDING_PASS_INCLUDE,
   })
 
-  return {
-    success: true,
-    message: 'Boarding pass generated successfully',
-    data: toDto(fullPass),
-  }
+  return { success: true, message: 'Boarding pass generated successfully', data: toDto(fullPass) }
 }
 
-//Get Boarding Pass
-
-/**
- * Returns the boarding pass for the authenticated passenger
- * (identified via the JWT uid → passenger lookup).
- */
 export async function getBoardingPassByUid(
   uid: string
 ): Promise<GenerateBoardingPassResponse> {
-  // BoardingPass now carries uid directly — return the most recently issued one
   const pass = await prisma.boardingPass.findFirst({
     where: { uid },
     orderBy: { issuedAt: 'desc' },
     include: BOARDING_PASS_INCLUDE,
   })
 
-  if (!pass) {
-    throw new Error('No boarding pass found for this account')
-  }
+  if (!pass) throw new Error('No boarding pass found for this account')
 
-  return {
-    success: true,
-    message: 'Boarding pass retrieved',
-    data: toDto(pass),
-  }
+  return { success: true, message: 'Boarding pass retrieved', data: toDto(pass) }
 }
 
-// Verify Boarding Pass (QR scan endpoint)
-
 /**
- * Called by a QR scanner (gate agent, security app, etc.).
- * Receives the passId extracted from the QR code payload
- * "CHECKIN_PASS:<passId>" and validates the reservation.
+ * Returns ALL boarding passes for the authenticated user.
+ * Used by the mobile sync worker to keep SQLite up to date.
  */
-export async function verifyBoardingPass(
-  passId: string
-): Promise<VerifyBoardingPassResponse> {
+export async function getAllBoardingPassesByUid(
+  uid: string
+): Promise<GetAllBoardingPassesResponse> {
+  const passes = await prisma.boardingPass.findMany({
+    where: { uid },
+    orderBy: { issuedAt: 'desc' },
+    include: BOARDING_PASS_INCLUDE,
+  })
+
+  return { success: true, message: 'Boarding passes retrieved', data: passes.map(toDto) }
+}
+
+export async function verifyBoardingPass(passId: string): Promise<VerifyBoardingPassResponse> {
   const pass = await prisma.boardingPass.findUnique({
     where: { passId },
     include: {
-        passenger: {
-            include: {
-                booking: true,
-            },
-        },
-        flight: true,
+      passenger: { include: { booking: true } },
+      flight: true,
     },
   })
 
-  if (!pass) {
-    return {
-      success: true,
-      valid: false,
-      message: 'Boarding pass not found',
-    }
-  }
+  if (!pass) return { success: true, valid: false, message: 'Boarding pass not found' }
 
   const passenger = pass.passenger
   const booking = passenger.booking
-
-  // Validate: passenger must be CHECKED_IN and booking must be CONFIRMED
-  const isValid = passenger.checkinStatus === 'CHECKED_IN'
-    && (booking as any).status === 'CONFIRMED'
+  const isValid = passenger.checkinStatus === 'CHECKED_IN' && (booking as any).status === 'CONFIRMED'
 
   if (!isValid) {
     return {
