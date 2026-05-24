@@ -28,20 +28,21 @@ export const getAllBookings = async () => {
 }
 
 export const getUpcomingBookings = async (uid: string) => {
-  const now = new Date()
+  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
   try {
     const bookings = await prisma.booking.findMany({
       where: {
-        checkinSession: {
-          uid: uid
-        },
+        checkinSession: { uid },
         flight: {
-          departureTime: { gt: now },
+          departureTime: { gte: threeDaysAgo },
         },
       },
       include: {
         flight: true,
         passengers: true,
+        checkinSession: {
+          select: { passengerId: true }
+        }
       },
       orderBy: {
         flight: { departureTime: 'asc' },

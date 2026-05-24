@@ -14,17 +14,23 @@ export const createOrResumeSession = async (
 ): Promise<void> => {
   try {
     const { passengerId, bookingId } = req.body as CreateSessionRequest
+    const uid = (req as AuthenticatedRequest).user.uid
 
+    console.log("=== CREATE SESSION BODY ===")
+    console.log(req.body)
+    console.log("=== CREATE SESSION UID ===")
+    console.log(uid)
     if (!passengerId || typeof passengerId !== 'string') {
       res.status(400).json({ success: false, message: 'passengerId is required' })
       return
     }
+
     if (!bookingId || typeof bookingId !== 'string') {
       res.status(400).json({ success: false, message: 'bookingId is required' })
       return
     }
 
-    const result = await CheckinService.createOrResumeSession(passengerId, bookingId)
+    const result = await CheckinService.createOrResumeSession(passengerId, bookingId, uid)
     res.status(201).json(result)
   } catch (error: any) {
     const status = error.message.includes('not yet open') || error.message.includes('closed')
@@ -94,7 +100,8 @@ export const verifyPassport = async (req: Request, res: Response) => {
         error: 'Passport does not match any booking. Please check your passport and try again.',
       })
     }
-
+    console.log("=== VERIFY PASSPORT RESPONSE ===")
+    console.log(JSON.stringify({ passenger }, null, 2))
     return res.status(200).json({ passenger })
   } catch (error: any) {
     return res.status(500).json({ error: error.message })

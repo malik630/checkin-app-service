@@ -229,6 +229,19 @@ async function main() {
       checkinDeadline: new Date(departure5.getTime() - 60 * 60 * 1000),
     },
   })
+
+  /*const booking6 = await prisma.booking.create({
+    data: {
+      bookingId: 'booking-melliti-001',
+      uid: melliti.uid,
+      flightId: flight6.flightId,
+      pnr: 'MELLITI1',
+      lastName: 'MELLITI',
+      bookingRef: 'MELLITI1',
+      status: 'PASSED',
+      checkinDeadline: new Date(departure5.getTime() - 60 * 60 * 1000),
+    },
+  })*/
   console.log('Bookings seeded.')
 
   // Passengers
@@ -302,6 +315,21 @@ async function main() {
       nationality: 'Algerian',
       dateOfBirth: '2004-05-30',
       expiryDate: '2027-07-24',
+      seatNumber: null,
+      checkinStatus: 'PENDING',
+    },
+  })
+
+  const passenger6 = await prisma.passenger.create({
+    data: {
+      passengerId: 'passenger-melliti-001',
+      bookingId: booking5.bookingId,
+      firstName: 'Abdelmalek',
+      lastName: 'MELLITI',
+      passportNumber: '196118578',
+      nationality: 'Algerian',
+      dateOfBirth: '2004-12-25',
+      expiryDate: '2024-01-22',
       seatNumber: null,
       checkinStatus: 'PENDING',
     },
