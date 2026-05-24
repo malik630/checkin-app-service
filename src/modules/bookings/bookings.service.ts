@@ -1,11 +1,11 @@
 import prisma from '../../prisma/client.js'
 
+const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+
 export const getAllBookings = async () => {
-  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
   try {
     const bookings = await prisma.booking.findMany({ 
       where: {
-        status: { not: 'CHECKED_IN' },
         flight: {
           departureTime: {
             gte: threeDaysAgo
@@ -21,6 +21,7 @@ export const getAllBookings = async () => {
           departureTime: 'desc',
         },
       },
+      distinct: ['flightId'],
     })
     return bookings
   } catch (error) {
@@ -28,9 +29,7 @@ export const getAllBookings = async () => {
     throw error
   }
 }
-
 export const getUpcomingBookings = async (uid: string) => {
-  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
   try {
     // 1. Fetch check-in sessions by user id
     const sessions = await prisma.checkInSession.findMany({
@@ -43,9 +42,9 @@ export const getUpcomingBookings = async (uid: string) => {
     const bookings = await prisma.booking.findMany({
       where: {
         checkinSessionId: { in: sessionIds },
-        status: 'CHECKED_IN',
+        //status: 'CHECKED_IN',
         flight: {
-          departureTime: { gt: new Date() },
+          departureTime: { gt: threeDaysAgo },
         },
       },
       include: {
