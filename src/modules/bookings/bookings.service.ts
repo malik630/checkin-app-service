@@ -17,7 +17,9 @@ export const getAllBookings = async () => {
         passengers: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        flight: {
+          departureTime: 'desc',
+        },
       },
     })
     return bookings
