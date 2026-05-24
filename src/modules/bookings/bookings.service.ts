@@ -43,8 +43,9 @@ export const getUpcomingBookings = async (uid: string) => {
     const bookings = await prisma.booking.findMany({
       where: {
         checkinSessionId: { in: sessionIds },
+        status: 'CHECKED_IN',
         flight: {
-          departureTime: { gte: threeDaysAgo },
+          departureTime: { gt: new Date() },
         },
       },
       include: {
