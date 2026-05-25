@@ -4,6 +4,7 @@ import { env } from './config/env.js'
 import prisma from './prisma/client.js'
 
 import { startBookingStatusCron } from './modules/bookings/bookings.cron.js'
+import { startCheckInNotificationCron } from './modules/notifications/notifications.cron.js'
 
 const start = async () => {
   try {
@@ -16,6 +17,7 @@ const start = async () => {
       console.log(`API docs: http://localhost:${env.port}/api`)
       console.log(`Environment: ${env.nodeEnv}`)
       startBookingStatusCron()
+      startCheckInNotificationCron()
     })
   } catch (err) {
     console.error('Failed to start server:', err)

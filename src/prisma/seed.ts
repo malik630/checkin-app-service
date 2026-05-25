@@ -9,18 +9,21 @@ async function main() {
 
   // Clean up
   console.log('Clearing old tables...')
-  await prisma.boardingPass.deleteMany()
-  await prisma.checkInSession.deleteMany()
-  await prisma.seatMap.deleteMany()
-  await prisma.notification.deleteMany()
-  await prisma.passenger.deleteMany()
-  await prisma.booking.deleteMany()
-  await prisma.flight.deleteMany()
-  await prisma.preferences.deleteMany()
-  await prisma.profile.deleteMany()
-  await prisma.user.deleteMany()
-
-  console.log('Tables cleared successfully.')
+  try {
+    await prisma.boardingPass.deleteMany()
+    await prisma.checkInSession.deleteMany()
+    await prisma.seatMap.deleteMany()
+    await prisma.notification.deleteMany()
+    await prisma.passenger.deleteMany()
+    await prisma.booking.deleteMany()
+    await prisma.flight.deleteMany()
+    await prisma.preferences.deleteMany()
+    await prisma.profile.deleteMany()
+    await prisma.user.deleteMany()
+    console.log('Tables cleared successfully.')
+  } catch (error) {
+    console.log('Tables were already empty or do not exist yet. Proceeding to creation...');
+  }
 
   const passwordHash = await bcrypt.hash('Password123!', 12)
 
