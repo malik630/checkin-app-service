@@ -68,5 +68,7 @@ export interface ConcludeCheckinResponse {
       currentStep: string
       completedAt: Date
     }
+    passengerStatus: string
+    bookingStatus: string
   }
 }

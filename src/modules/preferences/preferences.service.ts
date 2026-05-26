@@ -103,9 +103,22 @@ export async function concludeCheckinWithPreferences(
   // Validate passenger exists
   const passenger = await prisma.passenger.findUnique({
     where: { passengerId },
+    include: {
+      booking: {
+        select: {
+          bookingId: true,
+          uid: true,
+          status: true,
+        },
+      },
+    },
   });
   if (!passenger) throw new Error("Passenger not found");
   console.log("✅ [Service] Passenger found:", passenger.passengerId);
+
+  if (passenger.booking.uid !== uid) {
+    throw new Error("Passenger does not belong to this user");
+  }
 
   // Validate check-in session exists
   const checkInSession = await prisma.checkInSession.findUnique({
@@ -128,26 +141,37 @@ export async function concludeCheckinWithPreferences(
   const preferences = preferencesResult.data;
   console.log("✅ [Service] Preferences saved");
 
-  // Update check-in session as completed
-  console.log("⏳ [Service] Marking check-in session as completed...");
-  const updatedSession = await prisma.checkInSession.update({
-    where: { passengerId },
-    data: {
-      currentStep: "PREFERENCES_COMPLETED",
-      completedAt: new Date(),
-    },
-  });
-  console.log("✅ [Service] Check-in session marked as completed");
-
-  // Update passenger check-in status
-  console.log("⏳ [Service] Updating passenger check-in status...");
-  await prisma.passenger.update({
-    where: { passengerId },
-    data: {
-      checkinStatus: "COMPLETED",
-    },
-  });
-  console.log("✅ [Service] Passenger check-in status updated to COMPLETED");
+  console.log("⏳ [Service] Closing check-in session and marking passenger as checked in...");
+  const completedAt = new Date();
+  const [updatedSession, updatedPassenger, updatedBooking] = await prisma.$transaction([
+    prisma.checkInSession.update({
+      where: { passengerId },
+      data: {
+        currentStep: "COMPLETED",
+        completedAt,
+      },
+    }),
+    prisma.passenger.update({
+      where: { passengerId },
+      data: {
+        checkinStatus: "CHECKED_IN",
+      },
+    }),
+    prisma.booking.update({
+      where: { bookingId: passenger.booking.bookingId },
+      data: {
+        status: "CHECKED_IN",
+      },
+    }),
+  ]);
+  console.log(
+    "✅ [Service] Check-in closed:",
+    {
+      sessionId: updatedSession.sessionId,
+      passengerStatus: updatedPassenger.checkinStatus,
+      bookingStatus: updatedBooking.status,
+    }
+  );
 
   return {
     success: true,
@@ -170,6 +194,8 @@ export async function concludeCheckinWithPreferences(
         currentStep: updatedSession.currentStep,
         completedAt: updatedSession.completedAt!,
       },
+      passengerStatus: updatedPassenger.checkinStatus,
+      bookingStatus: updatedBooking.status,
     },
   };
 }

@@ -7,9 +7,14 @@ import type { LoginRequest, RegisterRequest } from "../../types/auth.types.js";
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const body: LoginRequest = req.body;  // { email, password }
+    console.log(`[Auth] Login request received email=${body.email ?? 'missing'}`);
+
     const result = await AuthService.loginUser(body);
+    console.log(`[Auth] Login success uid=${result.user.uid} email=${result.user.email} STATUS 200`);
+
     res.status(200).json(result);         // sends LoginResponse back to app
   } catch (error: any) {
+    console.warn(`[Auth] Login failed email=${req.body?.email ?? 'missing'} STATUS 401 message=${error.message}`);
     res.status(401).json({ message: error.message }); // wrong password etc
   }
 };

@@ -162,6 +162,28 @@ async function main() {
     },
   })
 
+  // 6. Fresh not-checked-in test flight for Fatma (in 6 hours)
+  const departure6 = new Date(now.getTime() + 6 * 60 * 60 * 1000)
+  const arrival6 = new Date(departure6.getTime() + 1 * 60 * 60 * 1000 + 45 * 60 * 1000)
+  const flight6 = await prisma.flight.create({
+    data: {
+      flightId: 'flight-ah6170-006',
+      flightNumber: 'AH 6170',
+      origin: 'ALG',
+      originCity: 'Algiers',
+      destination: 'BCN',
+      destinationCity: 'Barcelona',
+      departureTime: departure6,
+      arrivalTime: arrival6,
+      aircraftType: 'Airbus A320neo',
+      status: 'Scheduled',
+      gate: 'B11',
+      terminal: 'T1',
+      boardingTime: '16:20',
+      checkInOpensTime: '14:05',
+    },
+  })
+
   console.log('Flights seeded.')
 
   // Bookings (All for Fatma)
@@ -227,6 +249,19 @@ async function main() {
       bookingRef: 'FATMA5',
       status: 'PASSED',
       checkinDeadline: new Date(departure5.getTime() - 60 * 60 * 1000),
+    },
+  })
+
+  const booking6 = await prisma.booking.create({
+    data: {
+      bookingId: 'booking-fatma-006',
+      uid: fatma.uid,
+      flightId: flight6.flightId,
+      pnr: 'FATMA6',
+      lastName: 'Djerfi',
+      bookingRef: 'FATMA6',
+      status: 'CHECK_IN_OPEN',
+      checkinDeadline: new Date(departure6.getTime() - 60 * 60 * 1000),
     },
   })
 
@@ -322,6 +357,21 @@ async function main() {
 
   const passenger6 = await prisma.passenger.create({
     data: {
+      passengerId: 'passenger-fatma-006',
+      bookingId: booking6.bookingId,
+      firstName: 'Fatma',
+      lastName: 'Djerfi',
+      passportNumber: '307840436',
+      nationality: 'Algerian',
+      dateOfBirth: '2004-05-30',
+      expiryDate: '2027-07-24',
+      seatNumber: null,
+      checkinStatus: 'PENDING',
+    },
+  })
+
+  const passenger7 = await prisma.passenger.create({
+    data: {
       passengerId: 'passenger-melliti-001',
       bookingId: booking5.bookingId,
       firstName: 'Abdelmalek',
@@ -408,6 +458,7 @@ async function main() {
     flight3.flightId,
     flight4.flightId,
     flight5.flightId,
+    flight6.flightId,
   ]
 
   for (const fId of flightsToSeat) {
@@ -447,6 +498,7 @@ async function main() {
   console.log('  Booking 3:    Pnr = FATMA3 (Upcoming Checked In)')
   console.log('  Booking 4:    Pnr = FATMA4 (Passed - Within 3 days)')
   console.log('  Booking 5:    Pnr = FATMA5 (Passed - Older than 3 days)')
+  console.log('  Booking 6:    Pnr = FATMA6 (Not checked in - ready to test check-in)')
 }
 
 main()
