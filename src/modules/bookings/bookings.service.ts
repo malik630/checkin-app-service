@@ -1,6 +1,5 @@
 import prisma from '../../prisma/client.js'
 
-const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
 
 export const getAllBookings = async () => {
   try {
@@ -34,6 +33,7 @@ export const getUpcomingBookings = async (uid: string) => {
   try {
     const bookings = await prisma.booking.findMany({
       where: {
+        status: { not: 'PASSED' },
         checkinSession: {
           uid,
           currentStep: 'COMPLETED',
