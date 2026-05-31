@@ -24,10 +24,24 @@ export function startBookingStatusCron() {
         console.log(`[Cron] Updated ${toOpen.count} bookings from CONFIRMED to CHECK_IN_OPEN.`)
       }
 
-      // 2. Any non-PASSED status -> PASSED (flight departed)
-      const toPassed = await prisma.booking.updateMany({
+      // 2. CHECK_IN_OPEN -> PASSED (checkinDeadline has passed)
+      const toPassedFromOpen = await prisma.booking.updateMany({
         where: {
-          status: { not: 'PASSED' },
+          status: 'CHECK_IN_OPEN',
+          checkinDeadline: { lte: now }
+        },
+        data: {
+          status: 'PASSED'
+        }
+      })
+      if (toPassedFromOpen.count > 0) {
+        console.log(`[Cron] Updated ${toPassedFromOpen.count} bookings from CHECK_IN_OPEN to PASSED (check-in deadline reached).`)
+      }
+
+      // 3. Any other non-PASSED and non-CHECKED_IN status -> PASSED (flight departed)
+      const toPassedGeneral = await prisma.booking.updateMany({
+        where: {
+          status: { notIn: ['PASSED', 'CHECKED_IN'] },
           flight: {
             departureTime: { lt: now }
           }
@@ -36,8 +50,8 @@ export function startBookingStatusCron() {
           status: 'PASSED'
         }
       })
-      if (toPassed.count > 0) {
-        console.log(`[Cron] Updated ${toPassed.count} bookings to PASSED (flight departed).`)
+      if (toPassedGeneral.count > 0) {
+        console.log(`[Cron] Updated ${toPassedGeneral.count} bookings to PASSED (flight departed).`)
       }
 
     } catch (error) {
