@@ -1,4 +1,5 @@
 import prisma from '../../prisma/client.js'
+import { sendNotification } from '../notifications/notifications.service.js'
 import type {
   BoardingPassDto,
   GenerateBoardingPassResponse,
@@ -24,7 +25,10 @@ function toDto(pass: {
     firstName: string
     lastName: string
     checkinStatus: string
-    booking: { bookingRef: string }
+    booking: {
+      bookingId: string
+      bookingRef: string
+    }
   }
   flight: {
     flightNumber: string
@@ -62,7 +66,7 @@ const BOARDING_PASS_INCLUDE = {
   passenger: {
     include: {
       booking: {
-        select: { bookingRef: true },
+        select: { bookingId: true, bookingRef: true },
       },
     },
   },
@@ -138,6 +142,22 @@ export async function generateBoardingPass(
     where: { passengerId },
     include: BOARDING_PASS_INCLUDE,
   })
+
+  try {
+    await sendNotification({
+      uid: fullPass.uid,
+      passengerId,
+      flightId: fullPass.flightId,
+      bookingId: fullPass.passenger.booking.bookingId,
+      boardingPassId: fullPass.passId,
+      title: 'Check-in completed',
+      body: 'Your boarding pass is ready',
+      type: 'BOARDING',
+      screen: 'boarding_pass',
+    })
+  } catch (error) {
+    console.error('[Boarding] Failed to send boarding notification:', error)
+  }
 
   return { success: true, message: 'Boarding pass generated successfully', data: toDto(fullPass) }
 }

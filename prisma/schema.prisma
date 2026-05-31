@@ -20,6 +20,7 @@ model User {
 
   bookings        Booking[]
   notifications   Notification[]
+  deviceTokens    DeviceToken[]
   profile         Profile?
   preferences     Preferences?
   checkInSessions CheckInSession[]
@@ -71,6 +72,7 @@ model Booking {
   flight         Flight          @relation(fields: [flightId], references: [flightId])
   passengers     Passenger[]
   checkinSession CheckInSession? @relation(fields: [checkinSessionId], references: [sessionId])
+  notifications  Notification[]
 
   @@map("bookings")
 }
@@ -150,6 +152,7 @@ model BoardingPass {
   passenger Passenger @relation(fields: [passengerId], references: [passengerId])
   user      User      @relation(fields: [uid], references: [uid])
   flight    Flight    @relation(fields: [flightId], references: [flightId])
+  notifications Notification[]
 
   @@map("boarding_passes")
 }
@@ -159,15 +162,23 @@ model Notification {
   uid            String
   passengerId    String?  @map("passenger_id")
   flightId       String?  @map("flight_id")
+  bookingId      String?  @map("booking_id")
+  boardingPassId String?  @map("boarding_pass_id")
   type           String
   title          String
   body           String
+  screen         String   @default("none")
   isRead         Boolean  @default(false) @map("is_read")
   createdAt      DateTime @default(now()) @map("created_at")
 
-  user      User       @relation(fields: [uid], references: [uid])
-  passenger Passenger? @relation(fields: [passengerId], references: [passengerId])
-  flight    Flight?    @relation(fields: [flightId], references: [flightId])
+  user         User          @relation(fields: [uid], references: [uid])
+  passenger    Passenger?    @relation(fields: [passengerId], references: [passengerId])
+  flight       Flight?       @relation(fields: [flightId], references: [flightId])
+  booking      Booking?      @relation(fields: [bookingId], references: [bookingId])
+  boardingPass BoardingPass? @relation(fields: [boardingPassId], references: [passId])
+
+  @@index([uid, createdAt])
+  @@unique([type, bookingId])
 
   @@map("notifications")
 }
@@ -204,4 +215,17 @@ model Preferences {
 
   @@unique([uid])
   @@map("preferences")
+}
+
+model DeviceToken {
+  tokenId   String   @id @default(uuid()) @map("token_id")
+  uid       String   @map("uid")
+  fcmToken  String   @unique @map("fcm_token")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [uid], references: [uid])
+
+  @@index([uid])
+  @@map("device_tokens")
 }
