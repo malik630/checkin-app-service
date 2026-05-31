@@ -7,11 +7,8 @@ import checkinRoutes from './modules/checkin/checkin.routes.js'
 import seatsRoutes from './modules/seats/seats.routes.js'
 
 import preferencesRoutes from './modules/preferences/preferences.routes.js'
-/*import boardingRoutes from './modules/boarding/boarding.routes.js'
-import notificationsRoutes from './modules/notifications/notifications.routes.js'*/
-
 import boardingRoutes from './modules/boarding/boarding.routes.js'
-//import notificationsRoutes from './modules/notifications/notifications.routes.js'
+import notificationsRoutes from './modules/notifications/notifications.routes.js'
 
 import { authMiddleware } from './middleware/auth.middleware.js'
 
@@ -25,9 +22,5 @@ router.use('/boarding', boardingRoutes)
 router.use('/checkin', authMiddleware as RequestHandler, checkinRoutes)
 router.use('/selectseats', authMiddleware as RequestHandler, seatsRoutes)
 router.use('/preferences', preferencesRoutes)
-/*
-=======
-
-//router.use('/notifications', authMiddleware as RequestHandler, notificationsRoutes)
-*/
+router.use('/notifications', notificationsRoutes)
 export default router;

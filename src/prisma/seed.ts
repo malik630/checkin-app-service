@@ -9,18 +9,23 @@ async function main() {
 
   // Clean up
   console.log('Clearing old tables...')
-  await prisma.boardingPass.deleteMany()
-  await prisma.checkInSession.deleteMany()
-  await prisma.seatMap.deleteMany()
-  await prisma.notification.deleteMany()
-  await prisma.passenger.deleteMany()
-  await prisma.booking.deleteMany()
-  await prisma.flight.deleteMany()
-  await prisma.preferences.deleteMany()
-  await prisma.profile.deleteMany()
-  await prisma.user.deleteMany()
-
-  console.log('Tables cleared successfully.')
+  try {
+    await prisma.boardingPass.deleteMany()
+    await prisma.checkInSession.deleteMany()
+    await prisma.seatMap.deleteMany()
+    await prisma.notification.deleteMany()
+    await prisma.passenger.deleteMany()
+    await prisma.booking.deleteMany()
+    await prisma.flight.deleteMany()
+    await prisma.preferences.deleteMany()
+    await prisma.profile.deleteMany()
+    await prisma.deviceToken.deleteMany()
+    await prisma.user.deleteMany()
+    console.log('Tables cleared successfully.')
+  } catch (error) {
+    console.error('Cleanup failed:', error)
+    throw error
+  }
 
   const passwordHash = await bcrypt.hash('Password123!', 12)
 

@@ -20,7 +20,8 @@ export const selectSeat = async (req: Request, res: Response): Promise<void> => 
     const body: SelectSeatRequest = req.body
 
     if (!body?.seatNumber) {
-      return res.status(400).json({ message: 'seatNumber is required' })
+      res.status(400).json({ message: 'seatNumber is required' })
+      return
     }
 
     const updatedSeat: SeatMapDto = await seatsService.selectSeat(id, body)
