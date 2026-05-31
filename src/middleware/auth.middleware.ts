@@ -11,6 +11,7 @@ export const authMiddleware = (
 
   // Expect header: "Bearer <token>"
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.warn(`[AuthMiddleware] Missing bearer token for ${req.method} ${req.originalUrl} STATUS 401`)
     res.status(401).json({ success: false, message: 'No token provided' })
     return
   }
@@ -20,8 +21,10 @@ export const authMiddleware = (
   try {
     const decoded = verifyToken(token)
     req.user = decoded
+    console.log(`[AuthMiddleware] Authenticated uid=${decoded.uid} ${req.method} ${req.originalUrl}`)
     next()
   } catch {
+    console.warn(`[AuthMiddleware] Invalid token for ${req.method} ${req.originalUrl} STATUS 401`)
     res.status(401).json({ success: false, message: 'Invalid or expired token' })
   }
 }

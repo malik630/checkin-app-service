@@ -143,17 +143,59 @@ export async function advanceSessionStep(
     throw new Error('Check-in session not found')
   }
 
-  const updated = await prisma.checkInSession.update({
-    where: { passengerId },
-    data: { currentStep: step },
+  const updated = await prisma.$transaction(async (tx) => {
+    const updatedSession = await tx.checkInSession.update({
+      where: { passengerId },
+      data: {
+        currentStep: step,
+        completedAt: step === 'COMPLETED' ? new Date() : undefined,
+      },
+      include: {
+        passenger: {
+          include: {
+            booking: {
+              select: { bookingId: true },
+            },
+          },
+        },
+      },
+    })
+
+    if (step !== 'COMPLETED') {
+      return {
+        sessionId: updatedSession.sessionId,
+        currentStep: updatedSession.currentStep,
+      }
+    }
+
+    const updatedPassenger = await tx.passenger.update({
+      where: { passengerId },
+      data: { checkinStatus: 'CHECKED_IN' },
+    })
+
+    const updatedBooking = await tx.booking.update({
+      where: { bookingId: updatedSession.passenger.booking.bookingId },
+      data: { status: 'CHECKED_IN' },
+    })
+
+    console.log('[CheckinService] Session completed:', {
+      sessionId: updatedSession.sessionId,
+      passengerId,
+      passengerStatus: updatedPassenger.checkinStatus,
+      bookingStatus: updatedBooking.status,
+    })
+
+    return {
+      sessionId: updatedSession.sessionId,
+      currentStep: updatedSession.currentStep,
+      passengerStatus: updatedPassenger.checkinStatus,
+      bookingStatus: updatedBooking.status,
+    }
   })
 
   return {
     success: true,
-    data: {
-      sessionId: updated.sessionId,
-      currentStep: updated.currentStep,
-    },
+    data: updated,
   }
 }
 

@@ -138,6 +138,11 @@ export async function generateBoardingPass(
     data: { checkinStatus: 'CHECKED_IN' },
   })
 
+  await prisma.booking.update({
+    where: { bookingId: passenger.booking.bookingId },
+    data: { status: 'CHECKED_IN' },
+  })
+
   const fullPass = await prisma.boardingPass.findUniqueOrThrow({
     where: { passengerId },
     include: BOARDING_PASS_INCLUDE,

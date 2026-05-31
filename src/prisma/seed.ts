@@ -19,7 +19,7 @@ async function main() {
     await prisma.flight.deleteMany()
     await prisma.preferences.deleteMany()
     await prisma.profile.deleteMany()
-    await prisma.deviceToken.deleteMany()
+    // await prisma.deviceToken.deleteMany()
     await prisma.user.deleteMany()
     console.log('Tables cleared successfully.')
   } catch (error) {
@@ -200,7 +200,7 @@ async function main() {
     },
   })
 
-  const booking4 = await prisma.booking.create({
+  const booking5 = await prisma.booking.create({
     data: {
       bookingId: 'booking-youcef-002',
       uid: youcef.uid,
@@ -213,7 +213,7 @@ async function main() {
     },
   })
 
-  const booking5 = await prisma.booking.create({
+  const booking6 = await prisma.booking.create({
     data: {
       bookingId: 'booking-youcef-003',
       uid: youcef.uid,
@@ -275,20 +275,20 @@ async function main() {
     },
   })
 
-  await prisma.passenger.create({
-    data: {
-      passengerId: 'passenger-youcef-002',
-      bookingId: booking4.bookingId,
-      firstName: 'Youcef',
-      lastName: 'Benali',
-      passportNumber: '512345678',
-      nationality: 'Algerian',
-      dateOfBirth: '1990-03-15',
-      expiryDate: '2028-03-15',
-      seatNumber: null,
-      checkinStatus: 'PENDING',
-    },
-  })
+  // await prisma.passenger.create({
+  //   data: {
+  //     passengerId: 'passenger-youcef-002',
+  //     bookingId: booking4.bookingId,
+  //     firstName: 'Youcef',
+  //     lastName: 'Benali',
+  //     passportNumber: '512345678',
+  //     nationality: 'Algerian',
+  //     dateOfBirth: '1990-03-15',
+  //     expiryDate: '2028-03-15',
+  //     seatNumber: null,
+  //     checkinStatus: 'PENDING',
+  //   },
+  // })
 
   await prisma.passenger.create({
     data: {

@@ -1,20 +1,20 @@
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
-import morgan from 'morgan'
 import router from './router.js'
 import { errorHandler, notFoundHandler } from './middleware/error.middleware.js'
+import { requestLogger } from './middleware/request-logger.middleware.js'
 
 const app = express()
+
+// Logging first so every request gets a start/end line, even auth failures.
+app.use(requestLogger)
 
 // Security & parsing
 app.use(helmet())
 app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-
-// Logging
-app.use(morgan('dev'))
 
 // Health check
 app.get('/health', (_req, res) => {

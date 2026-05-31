@@ -54,5 +54,7 @@ export interface UpdateStepResponse {
   data: {
     sessionId: string;
     currentStep: string;
+    passengerStatus?: string;
+    bookingStatus?: string;
   };
 }
