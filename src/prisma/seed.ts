@@ -192,7 +192,7 @@ async function main() {
       lastName: 'Djerfi',
       bookingRef: 'FATMA2',
       status: 'CHECK_IN_OPEN',
-      checkinDeadline: new Date(departure2.getTime() - 60 * 60 * 1000),
+      checkinDeadline: new Date(departure2.getTime() - 45 * 60 * 1000),
     },
   })
 
@@ -204,7 +204,7 @@ async function main() {
       pnr: 'FATMA3',
       lastName: 'Djerfi',
       bookingRef: 'FATMA3',
-      status: 'CHECKED_IN',
+      status: 'CONFIRMED',
       checkinDeadline: new Date(departure3.getTime() - 60 * 60 * 1000),
     },
   })
@@ -271,7 +271,7 @@ async function main() {
       bookingId: booking2.bookingId,
       firstName: 'Fatma',
       lastName: 'Djerfi',
-      passportNumber: '307840432',
+      passportNumber: '307840430',
       nationality: 'Algerian',
       dateOfBirth: '2004-05-30',
       expiryDate: '2027-07-24',
@@ -286,12 +286,12 @@ async function main() {
       bookingId: booking3.bookingId,
       firstName: 'Fatma',
       lastName: 'Djerfi',
-      passportNumber: '307840433',
+      passportNumber: '307840430',
       nationality: 'Algerian',
       dateOfBirth: '2004-05-30',
       expiryDate: '2027-07-24',
-      seatNumber: '12A',
-      checkinStatus: 'CHECKED_IN',
+      seatNumber: null,
+      checkinStatus: 'PENDING',
     },
   })
 
@@ -301,12 +301,12 @@ async function main() {
       bookingId: booking4.bookingId,
       firstName: 'Fatma',
       lastName: 'Djerfi',
-      passportNumber: '307840434',
+      passportNumber: '307840430',
       nationality: 'Algerian',
       dateOfBirth: '2004-05-30',
       expiryDate: '2027-07-24',
-      seatNumber: '14C',
-      checkinStatus: 'CHECKED_IN',
+      seatNumber: null,
+      checkinStatus: 'PENDING',
     },
   })
 
@@ -316,7 +316,7 @@ async function main() {
       bookingId: booking5.bookingId,
       firstName: 'Fatma',
       lastName: 'Djerfi',
-      passportNumber: '307840435',
+      passportNumber: '307840430',
       nationality: 'Algerian',
       dateOfBirth: '2004-05-30',
       expiryDate: '2027-07-24',
@@ -342,52 +342,7 @@ async function main() {
 
   console.log('Passengers seeded.')
 
-  // CheckIn Sessions — FK is on Booking side, so:
-  // 1. Create the session, 2. Update the booking to point to it
-  const session3 = await prisma.checkInSession.create({
-    data: {
-      sessionId: 'session-fatma-003',
-      passengerId: passenger3.passengerId,
-      uid: fatma.uid,
-      currentStep: 'COMPLETED',
-      completedAt: now,
-    },
-  })
-  await prisma.booking.update({
-    where: { bookingId: booking3.bookingId },
-    data: { checkinSessionId: session3.sessionId },
-  })
-
-  const session4 = await prisma.checkInSession.create({
-    data: {
-      sessionId: 'session-fatma-004',
-      passengerId: passenger4.passengerId,
-      uid: fatma.uid,
-      currentStep: 'COMPLETED',
-      completedAt: new Date(now.getTime() - 1.5 * 24 * 60 * 60 * 1000),
-    },
-  })
-  await prisma.booking.update({
-    where: { bookingId: booking4.bookingId },
-    data: { checkinSessionId: session4.sessionId },
-  })
-
   console.log('Check-in sessions seeded.')
-
-  // Boarding Pass for Booking 3 (Checked In, future flight)
-  await prisma.boardingPass.create({
-    data: {
-      passId: 'BP-passenger-fatma-003',
-      passengerId: passenger3.passengerId,
-      uid: fatma.uid,
-      flightId: flight3.flightId,
-      qrCode: 'CHECKIN_PASS:BP-passenger-fatma-003',
-      seatNumber: '12A',
-      gate: 'C03',
-      boardingTime: '13:15',
-      terminal: 'T3',
-    },
-  })
 
   console.log('Boarding passes seeded.')
 
@@ -433,9 +388,8 @@ async function main() {
           flightId: fId,
           seatNumber: `${row}${col}`,
           seatClass: 'Economy',
-          isAvailable: !(fId === flight3.flightId && row === 12 && col === 'A') && !(fId === flight4.flightId && row === 14 && col === 'C'),
+          isAvailable: true,
           isPremium: false,
-          occupiedBy: (fId === flight3.flightId && row === 12 && col === 'A') ? passenger3.passengerId : (fId === flight4.flightId && row === 14 && col === 'C') ? passenger4.passengerId : null
         }))
       )
     ]
@@ -449,7 +403,7 @@ async function main() {
   console.log('  Password:     Password123!')
   console.log('  Booking 1:    Pnr = FATMA1 (Upcoming Confirmed)')
   console.log('  Booking 2:    Pnr = FATMA2 (Upcoming Check-in Open)')
-  console.log('  Booking 3:    Pnr = FATMA3 (Upcoming Checked In)')
+  console.log('  Booking 3:    Pnr = FATMA3 (Upcoming Confirmed)')
   console.log('  Booking 4:    Pnr = FATMA4 (Passed - Within 3 days)')
   console.log('  Booking 5:    Pnr = FATMA5 (Passed - Older than 3 days)')
 }
