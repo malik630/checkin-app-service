@@ -103,11 +103,11 @@ export async function googleLoginUser(idToken: string) {
                 provider: 'google',
             },
         });
-    }
+        await sendWelcomeNotification(user.uid)
+      }
 
     const token = signToken({ uid: user.uid, email: user.email });
     const refreshToken = generateRefreshToken(user.uid);
-    await sendWelcomeNotification(user.uid)
 
     return { user: { uid: user.uid, email: user.email, displayName: user.displayName, phoneNumber: user.phoneNumber }, token, refreshToken };
 }
@@ -132,6 +132,8 @@ export async function registerUser(body: RegisterRequest): Promise<AuthResponse>
 
   const token = signToken({ uid: newUser.uid, email: newUser.email })
   const refreshToken = generateRefreshToken(newUser.uid)
+  await sendWelcomeNotification(newUser.uid)
+
 
   return {
     user: {
