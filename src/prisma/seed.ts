@@ -19,10 +19,12 @@ async function main() {
     await prisma.flight.deleteMany()
     await prisma.preferences.deleteMany()
     await prisma.profile.deleteMany()
+    await prisma.deviceToken.deleteMany()
     await prisma.user.deleteMany()
     console.log('Tables cleared successfully.')
   } catch (error) {
-    console.log('Tables were already empty or do not exist yet. Proceeding to creation...');
+    console.error('Cleanup failed:', error)
+    throw error
   }
 
   const passwordHash = await bcrypt.hash('Password123!', 12)
