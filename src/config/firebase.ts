@@ -11,7 +11,7 @@ function getServiceAccount(): admin.ServiceAccount {
 
   const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH
     ? resolve(process.env.FIREBASE_SERVICE_ACCOUNT_PATH)
-    : resolve(process.cwd(), 'src', 'config', '.firebase-key.json')
+    : resolve(process.cwd(), 'src', 'config', 'firebase-key.json')
 
   return JSON.parse(readFileSync(serviceAccountPath, 'utf8')) as admin.ServiceAccount
 }

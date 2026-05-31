@@ -29,6 +29,7 @@ JWT_SECRET="your-super-secret-jwt-key-change-in-production"
 JWT_EXPIRES_IN="7d"
 PORT=
 NODE_ENV=
+GOOGLE_WEB_CLIENT_ID=
 
 # 3. Push schema to DB (dev)
 npm run db:push
