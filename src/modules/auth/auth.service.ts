@@ -4,6 +4,7 @@ import { signToken } from '../../utils/jwt.js'
 import { env } from '../../config/env.js'
 import jwt from 'jsonwebtoken'
 import { OAuth2Client } from 'google-auth-library';
+import { sendNotification } from '../notifications/notifications.service.js'
 import type {
   LoginRequest,
   RegisterRequest,
@@ -16,6 +17,20 @@ import type {
 
 function generateRefreshToken(uid: string): string {
   return jwt.sign({ uid }, env.jwt.refreshSecret, { expiresIn: '7d' } as jwt.SignOptions)
+}
+
+async function sendWelcomeNotification(uid: string): Promise<void> {
+  try {
+    await sendNotification({
+      uid,
+      title: 'Welcome',
+      body: 'Welcome back to Airline Checkin App!',
+      type: 'WELCOME',
+      screen: 'none',
+    })
+  } catch (error) {
+    console.error('[Auth] Failed to send welcome notification:', error)
+  }
 }
 
 // ─── Login ─────────────────────────────────────────────────
@@ -33,6 +48,7 @@ export async function loginUser(body: LoginRequest): Promise<LoginResponse> {
 
   const token = signToken({ uid: record.uid, email: record.email })
   const refreshToken = generateRefreshToken(record.uid)
+  await sendWelcomeNotification(record.uid)
 
   return {
     user: {
@@ -87,7 +103,8 @@ export async function googleLoginUser(idToken: string) {
                 provider: 'google',
             },
         });
-    }
+        await sendWelcomeNotification(user.uid)
+      }
 
     const token = signToken({ uid: user.uid, email: user.email });
     const refreshToken = generateRefreshToken(user.uid);
@@ -115,6 +132,8 @@ export async function registerUser(body: RegisterRequest): Promise<AuthResponse>
 
   const token = signToken({ uid: newUser.uid, email: newUser.email })
   const refreshToken = generateRefreshToken(newUser.uid)
+  await sendWelcomeNotification(newUser.uid)
+
 
   return {
     user: {

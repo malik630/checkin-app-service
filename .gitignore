@@ -4,3 +4,6 @@ dist/
 *.log
 ngrok.exe
 .vscode/
+src/config/.firebase-key.json
+firebase-key.json
+src/config/firebase-key.json
