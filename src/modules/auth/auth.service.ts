@@ -48,7 +48,6 @@ export async function loginUser(body: LoginRequest): Promise<LoginResponse> {
 
   const token = signToken({ uid: record.uid, email: record.email })
   const refreshToken = generateRefreshToken(record.uid)
-  await sendWelcomeNotification(record.uid)
 
   return {
     user: {
@@ -132,7 +131,6 @@ export async function registerUser(body: RegisterRequest): Promise<AuthResponse>
 
   const token = signToken({ uid: newUser.uid, email: newUser.email })
   const refreshToken = generateRefreshToken(newUser.uid)
-  await sendWelcomeNotification(newUser.uid)
 
 
   return {
