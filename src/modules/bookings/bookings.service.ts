@@ -1,16 +1,15 @@
 import prisma from '../../prisma/client.js'
 
-
 export const getAllBookings = async () => {
   try {
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
-    const bookings = await prisma.booking.findMany({ 
+    const bookings = await prisma.booking.findMany({
       where: {
         flight: {
           departureTime: {
-            gte: threeDaysAgo
-          }
-        }
+            gte: threeDaysAgo,
+          },
+        },
       },
       include: {
         flight: true,
@@ -29,6 +28,7 @@ export const getAllBookings = async () => {
     throw error
   }
 }
+
 export const getUpcomingBookings = async (uid: string) => {
   try {
     const bookings = await prisma.booking.findMany({

@@ -52,7 +52,7 @@ export async function createOrResumeSession(
     throw new Error('Passenger not found for this booking')
   }
 
-  if (passenger.checkinStatus === 'CHECKED_IN') {
+  /*if (passenger.checkinStatus === 'CHECKED_IN') {
     throw new Error('Passenger already checked in')
   }
 
