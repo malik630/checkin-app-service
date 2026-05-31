@@ -185,7 +185,7 @@ export async function verifyBoardingPass(passId: string): Promise<VerifyBoarding
 
   const passenger = pass.passenger
   const booking = passenger.booking
-  const isValid = passenger.checkinStatus === 'CHECKED_IN' && (booking as any).status === 'CONFIRMED'
+  const isValid = passenger.checkinStatus === 'CHECKED_IN' && passenger.booking.flightId === pass.flightId
 
   if (!isValid) {
     return {
