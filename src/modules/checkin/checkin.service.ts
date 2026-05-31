@@ -102,6 +102,7 @@ export async function createOrResumeSession(
   await prisma.booking.update({
     where: { bookingId },
     data: { 
+      uid,
       checkinSessionId: session.sessionId,
     },
   })
