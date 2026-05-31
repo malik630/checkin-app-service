@@ -34,6 +34,7 @@ export const getUpcomingBookings = async (uid: string) => {
       where: {
         checkinSession: {
           uid,
+          currentStep: 'COMPLETED',
         },
       },
       include: {
