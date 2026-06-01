@@ -51,19 +51,32 @@ export async function registerToken(uid: string, token: string) {
 }
 
 export async function sendNotification(input: SendNotificationInput): Promise<NotificationDto> {
-  const notification = await prisma.notification.create({
-    data: {
-      uid: input.uid,
-      title: input.title,
-      body: input.body,
+  const notification = await prisma.notification.upsert({
+  where: {
+    type_bookingId: {         
       type: input.type,
-      screen: input.screen,
-      bookingId: input.bookingId,
-      boardingPassId: input.boardingPassId,
-      passengerId: input.passengerId,
-      flightId: input.flightId,
+      bookingId: input.bookingId!,
     },
-  })
+  },
+  create: {
+    uid: input.uid,
+    title: input.title,
+    body: input.body,
+    type: input.type,
+    screen: input.screen,
+    bookingId: input.bookingId,
+    boardingPassId: input.boardingPassId,
+    passengerId: input.passengerId,
+    flightId: input.flightId,
+  },
+  update: {
+    title: input.title,
+    body: input.body,
+    boardingPassId: input.boardingPassId,
+    createdAt: new Date(), // update la date pour "rafraîchir" la notification
+    isRead: false,  // reset le statut "lu" si on re-génère
+  },
+})
 
   const tokens = await prisma.deviceToken.findMany({
     where: { uid: input.uid },
