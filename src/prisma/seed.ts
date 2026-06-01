@@ -142,14 +142,14 @@ async function main() {
       originCity:      'Algiers',
       destination:     'CDG',
       destinationCity: 'Paris',
-      departureTime:   new Date('2026-06-02T16:00:00Z'),
-      arrivalTime:     new Date('2026-06-02T19:00:00Z'),
+      departureTime:   new Date('2026-06-02T10:00:00Z'),
+      arrivalTime:     new Date('2026-06-02T13:00:00Z'),
       aircraftType:    'Boeing 737-800',
       status:          'Scheduled',
       gate:            'A12',
       terminal:        'T1',
       boardingTime:    '16:20',       // 16h20 UTC = 17h20 Alger
-      checkInOpensTime: '16:00',      // heure locale affichée (string)
+      checkInOpensTime: '9:00',      // heure locale affichée (string)
     },
   })
 
