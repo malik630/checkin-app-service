@@ -24,6 +24,8 @@ app.get('/health', (_req, res) => {
 // API routes
 app.use('/api', router)
 
+app.use('/uploads', express.static('uploads'))
+
 // Error handling
 app.use(notFoundHandler)
 app.use(errorHandler)

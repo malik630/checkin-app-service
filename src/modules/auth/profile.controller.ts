@@ -94,26 +94,13 @@ export const updateEmail = async (
 };
 
 // ─── Upload Profile Photo ──────────────────────────────────
-export const uploadProfilePhoto = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const uploadProfilePhoto = async (req: Request, res: Response): Promise<void> => {
   try {
-    const uid = (req as any).user.uid;
-
-    const photoUrl = req.body.photoUrl;
-
-    const result = await ProfileService.uploadProfilePhoto(
-      uid,
-      photoUrl
-    );
-
-    res.status(200).json(result);
-
+    const uid = (req as any).user.uid
+    const photoUrl = `${process.env.BASE_URL}/uploads/${req.file!.filename}`
+    const result = await ProfileService.uploadProfilePhoto(uid, photoUrl)
+    res.status(200).json(result)
   } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    res.status(400).json({ success: false, message: error.message })
   }
-};
+}
