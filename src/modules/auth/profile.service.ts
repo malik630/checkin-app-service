@@ -81,6 +81,7 @@ export async function updateProfile(
         uid,
         fullName: fullName ?? user.displayName ?? 'User',
         phoneNumber: body.phoneNumber ?? user.phoneNumber ?? null,
+        photoUrl: user.photoUrl ?? null,
       },
     })
   }

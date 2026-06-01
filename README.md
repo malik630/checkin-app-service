@@ -30,6 +30,7 @@ JWT_EXPIRES_IN="7d"
 PORT=
 NODE_ENV=
 GOOGLE_WEB_CLIENT_ID=
+BASE_URL=http://192.168.1.x:3000
 
 # 3. Push schema to DB (dev)
 npm run db:push
